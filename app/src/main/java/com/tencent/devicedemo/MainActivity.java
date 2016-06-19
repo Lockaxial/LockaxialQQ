@@ -1,5 +1,6 @@
 package com.tencent.devicedemo;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -50,6 +51,12 @@ public class MainActivity extends Activity{
         //标题是属于View的，所以窗口所有的修饰部分被隐藏后标题依然有效
         //requestWindowFeature(getWindow().FEATURE_NO_TITLE);
         sendBroadcast(new Intent("com.android.action.hide_navigationbar"));
+        //if(intent.getBooleanExtra("back", false))
+        {
+            ActionBar ab = getActionBar();
+            if(ab != null)
+                ab.setDisplayHomeAsUpEnabled(true);
+        }
 
 		setContentView(R.layout.activity_main);
         kkaexparams.runShellCommand("chmod 0666 /dev/rkey");
