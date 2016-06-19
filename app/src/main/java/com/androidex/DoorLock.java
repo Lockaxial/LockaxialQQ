@@ -1,6 +1,5 @@
 package com.androidex;
 
-import android.app.AlertDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,6 +16,7 @@ import java.util.HashMap;
 
 /**
  * Created by yangjun on 16/6/6.
+ * 锁相开源门禁机软件的主要服务类,DoorLock主要提供开门,关门指令以及上报门开和关闭的事件.
  */
 public class DoorLock extends Service implements OnBackCall {
 
@@ -25,8 +25,13 @@ public class DoorLock extends Service implements OnBackCall {
 
     private DoorLockServiceBinder mDoorLock;
 
-    //当门的状态改变时的事件定义
+    /**
+     * 当门的状态改变时的事件定义
+     */
     public static final String DoorLockStatusChange 	 = "DoorLockStatusChange";
+    /**
+     * DoorLock通过DoorLockOpenDoor广播获得开门指令并发送给门禁控制器
+     */
     public static final String DoorLockOpenDoor          = "DoorLockOpenDoor";
     private NotifyReceiver mReceiver;
     private static DoorLock mServiceInstance = null;
@@ -85,6 +90,12 @@ public class DoorLock extends Service implements OnBackCall {
         String rkeyDev = "/dev/rkey";
         int ident = 0;
 
+        /**
+         * 开门指令
+         * @param index     门的序号,主门=0,副门=1
+         * @param delay     延迟关门的时间,0表示不启用延迟关门,大于0表示延迟时间,延迟时间为delay*150ms
+         * @return          大于0表示成功,实际上等于9表示真正的成功,因为返回值表示写入的数据,开门指令长度为9.
+         */
         public int openDoor(int index, int delay){
             kkfile rkey = new kkfile();
 
