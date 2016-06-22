@@ -557,33 +557,7 @@ public class TXDeviceService extends Service
             
             String strText = "收到DataPoint Property ID：" + arrayDataPoint[i].property_id + "   Property Value：" + arrayDataPoint[i].property_val;
             showToastMessage(strText);
-            switch((int) arrayDataPoint[i].property_id) {
-            case 1600006:   //主门开锁
-                {
-                    int status = Integer.parseInt(arrayDataPoint[i].property_val);
-                    Intent ds_intent = new Intent();
-                    ds_intent.setAction(DoorLock.DoorLockOpenDoor);
-                    ds_intent.putExtra("index",0);
-                    ds_intent.putExtra("delay",status);
-                    sendBroadcast(ds_intent);
-                    arrayDataPoint[i].ret_code = 1;
-                }
-                break;
-            case 100003101: //副门开锁
-                {
-                    int status = Integer.parseInt(arrayDataPoint[i].property_val);
-                    Intent ds_intent = new Intent();
-                    ds_intent.setAction(DoorLock.DoorLockOpenDoor);
-                    ds_intent.putExtra("index",1);
-                    ds_intent.putExtra("delay",status);
-                    sendBroadcast(ds_intent);
-                    arrayDataPoint[i].ret_code = 1;
-                }
-                break;
-            }
         }
-        //回复所有的DataPoint
-        ackDataPoint(from,arrayDataPoint);
 
         Intent intent = new Intent();
         intent.setAction(TXDeviceService.OnReceiveDataPoint);
@@ -592,6 +566,8 @@ public class TXDeviceService extends Service
         bundle.putParcelableArray("datapoint", arrayDataPoint);
         intent.putExtras(bundle);
         sendBroadcast(intent);
+        //回复所有的DataPoint
+        ackDataPoint(from,arrayDataPoint);
     }
     
     // ackDataPoint发送结果通知  

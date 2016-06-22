@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.androidex.plugins.OnBackCall;
 import com.androidex.plugins.kkfile;
@@ -51,6 +52,11 @@ public class DoorLock extends Service implements OnBackCall {
         filter.addAction(DoorLockOpenDoor);
         registerReceiver(mReceiver, filter);
         int r = mDoorLock.openDoor(1,16);
+        if(r == 9)
+            Toast.makeText(DoorLock.this, String.format("Open %d,delay %ds close.",1,16*150/1000), Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(DoorLock.this, String.format("Open door 1 fail return %d.",r), Toast.LENGTH_SHORT).show();
+
         Log.d(TAG,String.format("open door %d",r));
     }
 

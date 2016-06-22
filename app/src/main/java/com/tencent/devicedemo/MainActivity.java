@@ -133,19 +133,47 @@ public class MainActivity extends Activity{
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuItem m_unbind = menu.add("解除绑定");
         MenuItem m_upload_log = menu.add("上传日志");
+        MenuItem m_opendoor_log = menu.add("打开主门");
+        MenuItem m_opendoor1_log = menu.add("打开副门");
+        MenuItem m_exit_log = menu.add("退出");
 
         m_unbind.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
+
                 return true;
             }
         });
 
         m_upload_log.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
+                uploadDeviceLog(null);
                 return true;
             }
         });
 
+        m_opendoor_log.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                int status = 2;
+                Intent ds_intent = new Intent();
+                ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                ds_intent.putExtra("index",0);
+                ds_intent.putExtra("status",status);
+                sendBroadcast(ds_intent);
+                return true;
+            }
+        });
+
+        m_opendoor1_log.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                int status = 2;
+                Intent ds_intent = new Intent();
+                ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                ds_intent.putExtra("index",1);
+                ds_intent.putExtra("status",status);
+                sendBroadcast(ds_intent);
+                return true;
+            }
+        });
         return true;
     }
 
@@ -197,6 +225,7 @@ public class MainActivity extends Activity{
 	
 	protected void onDestroy(){
 		super.onDestroy();
+        unbindService(mConn);
 		unregisterReceiver(mNotifyReceiver);
 	}
 	

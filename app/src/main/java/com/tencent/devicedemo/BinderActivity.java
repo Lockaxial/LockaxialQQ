@@ -19,6 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidex.DoorLock;
 import com.tencent.av.VideoController;
 import com.tencent.device.MsgPack;
 import com.tencent.device.TXBinderInfo;
@@ -144,19 +145,43 @@ public class BinderActivity extends Activity  implements OnClickListener{
 					for (int i = 0; i < arrayDataPoint.length; ++i) {
 						TXDataPoint dp = (TXDataPoint)(arrayDataPoint[i]);
 						try {
-							JSONObject dpValue = new JSONObject(dp.property_val);
-							final String txtMsg = dpValue.getString("text");
-							if (dp.property_id == 10000) {	// 10000：文本消息
-								mHandler.post(new Runnable() {
-									public void run() {
-										MsgPack msgPack = new MsgPack();
-										msgPack.bIsSelf = false;
-										msgPack.strText = txtMsg;
-										adapter.addMsgPack(msgPack);
-									};
-								});
-							}
-						}
+                            switch((int) dp.property_id) {
+                                case 10000: //文本消息
+                                {
+                                    JSONObject dpValue = new JSONObject(dp.property_val);
+                                    final String txtMsg = dpValue.getString("text");
+                                    mHandler.post(new Runnable() {
+                                        public void run() {
+                                            MsgPack msgPack = new MsgPack();
+                                            msgPack.bIsSelf = false;
+                                            msgPack.strText = txtMsg;
+                                            adapter.addMsgPack(msgPack);
+                                        };
+                                    });
+                                }
+                                case 1600006:   //主门开锁
+                                {
+                                    int status = Integer.parseInt(dp.property_val);
+                                    Intent ds_intent = new Intent();
+                                    ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                                    ds_intent.putExtra("index",0);
+                                    ds_intent.putExtra("status",status);
+                                    sendBroadcast(ds_intent);
+                                }
+                                break;
+                                case 100003101: //副门开锁
+                                {
+                                    int status = Integer.parseInt(dp.property_val);
+                                    Intent ds_intent = new Intent();
+                                    ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                                    ds_intent.putExtra("index",1);
+                                    ds_intent.putExtra("status",status);
+                                    sendBroadcast(ds_intent);
+                                }
+                                break;
+                            }
+
+                        }
 						catch (Exception e) {
 							e.printStackTrace();
 						}
