@@ -10,16 +10,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.androidex.DoorLock;
 import com.tencent.av.VideoController;
 import com.tencent.device.MsgPack;
 import com.tencent.device.TXBinderInfo;
@@ -99,8 +98,19 @@ public class BinderActivity extends Activity  implements OnClickListener{
 		super.onDestroy();
 		unregisterReceiver(notifyReceiver);
 	}
-	
-	public class NotifyReceiver extends BroadcastReceiver {
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                setResult(RESULT_OK);
+                finish();
+                return true;
+        }
+        return false;
+    }
+
+    public class NotifyReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction() == TXDeviceService.OTAOnNewPkgCome) {
@@ -159,7 +169,8 @@ public class BinderActivity extends Activity  implements OnClickListener{
                                         };
                                     });
                                 }
-                                case 1600006:   //主门开锁
+                                break;
+                                /*case 1600006:   //主门开锁
                                 {
                                     int status = Integer.parseInt(dp.property_val);
                                     Intent ds_intent = new Intent();
@@ -178,7 +189,7 @@ public class BinderActivity extends Activity  implements OnClickListener{
                                     ds_intent.putExtra("status",status);
                                     sendBroadcast(ds_intent);
                                 }
-                                break;
+                                break;*/
                             }
 
                         }

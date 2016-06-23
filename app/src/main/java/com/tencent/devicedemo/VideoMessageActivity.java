@@ -13,11 +13,11 @@ import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -89,7 +89,18 @@ public class VideoMessageActivity extends Activity  implements OnClickListener, 
 			mediarecorder = null;
 		}
 	}
-	
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                setResult(RESULT_OK);
+                finish();
+                return true;
+        }
+        return false;
+    }
+
     private BroadcastReceiver mBroadcastHandler = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {

@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
@@ -158,8 +159,19 @@ public class VideoChatActivityHW extends Activity implements Renderer, SurfaceTe
 			}
 		}
 	}
-    
-	@Override
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                setResult(RESULT_OK);
+                finish();
+                return true;
+        }
+        return false;
+    }
+
+    @Override
 	public void onResume() {
 		super.onResume();
 		Log.d(TAG, "onResume");

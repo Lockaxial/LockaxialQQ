@@ -6,15 +6,12 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,7 +22,6 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.androidex.DoorLock;
-import com.androidex.IDoorLockInterface;
 import com.androidex.plugins.kkaexparams;
 import com.tencent.device.TXBinderInfo;
 import com.tencent.device.TXDeviceService;
@@ -63,7 +59,6 @@ public class MainActivity extends Activity{
 
 		Intent startIntent = new Intent(this, TXDeviceService.class); 
 		startService(startIntent);
-        bindService(startIntent, mConn, Context.BIND_AUTO_CREATE);
 
         Intent dlIntent = new Intent(this, DoorLock.class);
         startService(dlIntent);
@@ -174,7 +169,25 @@ public class MainActivity extends Activity{
                 return true;
             }
         });
-        return true;
+        m_exit_log.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                setResult(RESULT_OK);
+                finish();
+                return true;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                setResult(RESULT_OK);
+                finish();
+                return true;
+        }
+        return false;
     }
 
     public void eraseAllBinders(View v) {
@@ -221,12 +234,13 @@ public class MainActivity extends Activity{
 	
 	protected void onPause(){
 		super.onPause();
-	}
+        //unbindService(mConn);
+    }
 	
 	protected void onDestroy(){
 		super.onDestroy();
-        unbindService(mConn);
-		unregisterReceiver(mNotifyReceiver);
+        //unbindService(mConn);
+        unregisterReceiver(mNotifyReceiver);
 	}
 	
 	public class NotifyReceiver extends BroadcastReceiver {
@@ -267,22 +281,5 @@ public class MainActivity extends Activity{
 		dialogError = builder.create();
 		dialogError.show();
 	}
-
-    private IDoorLockInterface doorLockService = null;
-    private ServiceConnection mConn = new ServiceConnection() {
-        /** 获取服务对象时的操作 */
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // TODO Auto-generated method stub
-            doorLockService = IDoorLockInterface.Stub.asInterface(service);
-
-        }
-
-        /** 无法获取到服务对象时的操作 */
-        public void onServiceDisconnected(ComponentName name) {
-            // TODO Auto-generated method stub
-            doorLockService = null;
-        }
-
-    };
 
 }

@@ -11,7 +11,7 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.Window;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.tencent.device.TXDeviceService;
@@ -63,6 +63,17 @@ public class WifiDecodeActivity extends Activity{
 		createAudioRecord();
 		startRecord();
 	}
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                setResult(RESULT_OK);
+                finish();
+                return true;
+        }
+        return false;
+    }
 
 	private void createAudioRecord()
 	{

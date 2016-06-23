@@ -6,12 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.androidex.plugins.OnBackCall;
 import com.androidex.plugins.kkfile;
+import com.tencent.device.TXDataPoint;
+import com.tencent.device.TXDeviceService;
 
 import java.util.HashMap;
 
@@ -50,6 +53,7 @@ public class DoorLock extends Service implements OnBackCall {
         IntentFilter filter = new IntentFilter();
         filter.addAction(mDoorSensorAction);
         filter.addAction(DoorLockOpenDoor);
+        filter.addAction(TXDeviceService.OnReceiveDataPoint);
         registerReceiver(mReceiver, filter);
         int r = mDoorLock.openDoor(1,16);
         if(r == 9)
@@ -144,6 +148,40 @@ public class DoorLock extends Service implements OnBackCall {
                     mDoorLock.openDoor(index, 0x20);
                 }else {
                     mDoorLock.closeDoor(index);
+                }
+            } else if(intent.getAction().equals(TXDeviceService.OnReceiveDataPoint)){
+                Long from = intent.getExtras().getLong("from", 0);
+                Parcelable[] arrayDataPoint = intent.getExtras().getParcelableArray("datapoint");
+                for (int i = 0; i < arrayDataPoint.length; ++i) {
+                    TXDataPoint dp = (TXDataPoint)(arrayDataPoint[i]);
+                    try {
+                        switch((int) dp.property_id) {
+                            case 1600006:   //主门开锁
+                            {
+                                int status = Integer.parseInt(dp.property_val);
+                                Intent ds_intent = new Intent();
+                                ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                                ds_intent.putExtra("index",0);
+                                ds_intent.putExtra("status",status);
+                                sendBroadcast(ds_intent);
+                            }
+                            break;
+                            case 100003101: //副门开锁
+                            {
+                                int status = Integer.parseInt(dp.property_val);
+                                Intent ds_intent = new Intent();
+                                ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                                ds_intent.putExtra("index",1);
+                                ds_intent.putExtra("status",status);
+                                sendBroadcast(ds_intent);
+                            }
+                            break;
+                        }
+
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
