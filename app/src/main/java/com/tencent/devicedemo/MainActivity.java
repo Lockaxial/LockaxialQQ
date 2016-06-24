@@ -14,6 +14,7 @@ import android.media.AudioManager;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -142,6 +143,11 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         MenuItem m_upload_log = menu.add("上传日志");
         MenuItem m_opendoor_log = menu.add("打开主门");
         MenuItem m_opendoor1_log = menu.add("打开副门");
+        MenuItem m_setAlarm = menu.add("设置定时开机");
+        MenuItem m_runReboot = menu.add("重启");
+        MenuItem m_runShutdown = menu.add("关机");
+        MenuItem m_setPlugedShutdown = menu.add("设置拔电关机");
+
         MenuItem m_exit_log = menu.add("退出");
 
         m_unbind.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -188,6 +194,41 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                 return true;
             }
         });
+
+        m_setAlarm.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                long wakeupTime = SystemClock.elapsedRealtime() + 240000;       //唤醒时间,如果是关机唤醒时间不能低于3分钟,否则无法实现关机定时重启
+
+                DoorLock.getInstance().runSetAlarm(wakeupTime);
+                return true;
+            }
+        });
+
+        m_runReboot.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                DoorLock.getInstance().runReboot();
+                return true;
+            }
+        });
+
+        m_runShutdown.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                DoorLock.getInstance().runShutdown();
+                return true;
+            }
+        });
+
+        m_setPlugedShutdown.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                DoorLock.getInstance().setPlugedShutdown();
+                return true;
+            }
+        });
+
         return super.onCreateOptionsMenu(menu);
     }
 

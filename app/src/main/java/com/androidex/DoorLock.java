@@ -1,10 +1,13 @@
 package com.androidex;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
@@ -12,6 +15,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.androidex.plugins.OnBackCall;
+import com.androidex.plugins.kkaexparams;
 import com.androidex.plugins.kkfile;
 import com.tencent.device.TXDataPoint;
 import com.tencent.device.TXDeviceService;
@@ -37,8 +41,11 @@ public class DoorLock extends Service implements OnBackCall{
      * DoorLock通过DoorLockOpenDoor广播获得开门指令并发送给门禁控制器
      */
     public static final String DoorLockOpenDoor          = "DoorLockOpenDoor";
+    public static final String actionRunReboot           = "android.intent.action.ACTION_REBOOT";
+    public static final String actionRunShutdown         = "android.intent.action.ACTION_REQUEST_SHUTDOWN";
     private NotifyReceiver mReceiver;
     private static DoorLock mServiceInstance = null;
+    private boolean mPlugedShutdown = false;
 
     public static DoorLock getInstance()
     {
@@ -54,6 +61,7 @@ public class DoorLock extends Service implements OnBackCall{
         filter.addAction(mDoorSensorAction);
         filter.addAction(DoorLockOpenDoor);
         filter.addAction(TXDeviceService.OnReceiveDataPoint);
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(mReceiver, filter);
         int r = mDoorLock.openDoor(1,16);
         if(r == 9)
@@ -62,6 +70,59 @@ public class DoorLock extends Service implements OnBackCall{
             Toast.makeText(DoorLock.this, String.format("Open door 1 fail return %d.",r), Toast.LENGTH_SHORT).show();
 
         Log.d(TAG,String.format("open door %d",r));
+        //am.set(4, System.currentTimeMillis() + 240000/*从现在起30s*/,
+        //        PendingIntent.getBroadcast(getApplicationContext(), 100, new Intent(actionRunReboot), PendingIntent.FLAG_UPDATE_CURRENT));
+
+    }
+
+    public void runSetAlarm(long wakeupTime) {
+        AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+
+        PendingIntent pendingIntent;
+
+        /**
+         * 下面的代码演示如何实现定时事件,可以用于定时重启,先设置好重启时间,然后再关机.
+         *
+         * AlarmManager.ELAPSED_REALTIME            表示闹钟在手机睡眠状态下不可用，该状态下闹钟使用相对时间（相对于系统启动开始），状态值为3；
+         * AlarmManager.ELAPSED_REALTIME_WAKEUP     表示闹钟在睡眠状态下会唤醒系统并执行提示功能，该状态下闹钟也使用相对时间，状态值为2；
+         * AlarmManager.RTC                         表示闹钟在睡眠状态下不可用，该状态下闹钟使用绝对时间，即当前系统时间，状态值为1；
+         * AlarmManager.RTC_WAKEUP                  表示闹钟在睡眠状态下会唤醒系统并执行提示功能，该状态下闹钟使用绝对时间，状态值为0；
+         * AlarmManager.POWER_OFF_WAKEUP            表示闹钟在手机关机状态下也能正常进行提示功能，所以是5个状态中用的最多的状态之一，该状态下
+         *                                          闹钟也是用绝对时间，状态值为4；不过本状态好像受SDK版本影响，某些版本并不支持；
+         *
+         * RTC闹钟和ELAPSED_REALTIME最大的差别就是前者可以通过修改手机时间触发闹钟事件，后者要通过真实时间的流逝，即使在休眠状态，时间也会被计算。
+         */
+        Intent intent = new Intent();
+        pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        am.set(4,  wakeupTime, pendingIntent);
+    }
+
+    public void runReboot() {
+        //首先要关闭程序提供的服务,以免关机时程序还需要写入数据,导致存属区损坏
+        kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
+        kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
+
+        Intent intent = new Intent(actionRunReboot);
+        intent.putExtra("nowait", 1);
+        intent.putExtra("interval", 60);
+        intent.putExtra("window", 0);
+        sendBroadcast(intent);
+    }
+
+    public void runShutdown() {
+        //首先要关闭程序提供的服务,以免关机时程序还需要写入数据,导致存属区损坏
+        kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
+        kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
+
+        Intent intent = new Intent(actionRunShutdown);
+        intent.putExtra("nowait", 1);
+        intent.putExtra("interval", 60);
+        intent.putExtra("window", 0);
+        sendBroadcast(intent);
+    }
+
+    public void setPlugedShutdown() {
+        mPlugedShutdown = true;
     }
 
     @Override
@@ -183,6 +244,96 @@ public class DoorLock extends Service implements OnBackCall{
                         e.printStackTrace();
                     }
                 }
+            } else if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)){
+                /* 接收电池信息的函数,如果需要外电断电时关闭机器,可以在这里做
+                 * “status”（int类型）…状态，定义值是BatteryManager.BATTERY_STATUS_XXX。
+                 * “health”（int类型）…健康，定义值是BatteryManager.BATTERY_HEALTH_XXX。
+                 * “present”（boolean类型） “level”（int类型）…电池剩余容量 “scale”（int类型）…电池最大值。通常为100。
+                 * “icon-small”（int类型）…图标ID。
+                 * “plugged”（int类型）…连接的电源插座，定义值是BatteryManager.BATTERY_PLUGGED_XXX。
+                 * “voltage”（int类型）…mV。 “temperature”（int类型）…温度，0.1度单位。例如 表示197的时候，意思为19.7度。
+                 * “technology”（String类型）…电池类型，例如，Li-ion等等。
+                 */
+                int status = intent.getIntExtra("status", 0);
+                int health = intent.getIntExtra("health", 0);
+                boolean present = intent.getBooleanExtra("present", false);
+                int level = intent.getIntExtra("level", 0);
+                int scale = intent.getIntExtra("scale", 0);
+                int icon_small = intent.getIntExtra("icon-small", 0);
+                int plugged = intent.getIntExtra("plugged", 0);
+                int voltage = intent.getIntExtra("voltage", 0);
+                int temperature = intent.getIntExtra("temperature", 0);
+                String technology = intent.getStringExtra("technology");
+                String statusString = "";
+
+                switch (status) {
+                    case BatteryManager.BATTERY_STATUS_UNKNOWN:
+                        statusString = "unknown";
+                        break;
+                    case BatteryManager.BATTERY_STATUS_CHARGING:
+                        statusString = "charging";      //正在充电
+                        break;
+                    case BatteryManager.BATTERY_STATUS_DISCHARGING:
+                        statusString = "discharging";   //停止充电
+                        break;
+                    case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
+                        statusString = "not charging";  //没有充电
+                        break;
+                    case BatteryManager.BATTERY_STATUS_FULL:
+                        statusString = "full";          //电池充满
+                        break;
+                }
+
+                String healthString = "";
+                switch (health) {
+                    case BatteryManager.BATTERY_HEALTH_UNKNOWN:
+                        healthString = "unknown";
+                        break;
+                    case BatteryManager.BATTERY_HEALTH_GOOD:
+                        healthString = "good";
+                        break;
+                    case BatteryManager.BATTERY_HEALTH_OVERHEAT:
+                        healthString = "overheat";
+                        break;
+                    case BatteryManager.BATTERY_HEALTH_DEAD:
+                        healthString = "dead";
+                        break;
+                    case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE:
+                        healthString = "voltage";
+                        break;
+                    case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE:
+                        healthString = "unspecified failure";
+                        break;
+                }
+
+                String acString = "";
+                switch (plugged) {
+                    case BatteryManager.BATTERY_PLUGGED_AC:
+                        acString = "plugged ac";                                    //电源供电
+                        break;
+                    case BatteryManager.BATTERY_PLUGGED_USB:
+                        acString = "plugged usb";                                   //USB供电
+
+                        break;
+                    default:
+                        acString = "plugged battery only";                          //
+                        if(mPlugedShutdown) {
+                            runShutdown();                                                        // 当检测出是电池供电时，直接执行关机程序
+                        }
+                        break;
+                }
+				/*
+				Log.v("status", statusString);
+                Log.v("health", healthString);
+				Log.v("present", String.valueOf(present));
+				Log.v("level", String.valueOf(level));
+				Log.v("scale", String.valueOf(scale));
+				Log.v("icon_small", String.valueOf(icon_small));
+				Log.v("plugged", acString);
+				Log.v("voltage", String.valueOf(voltage));
+				Log.v("temperature", String.valueOf(temperature));
+				Log.v("technology", technology);
+				*/
             }
         }
     }
