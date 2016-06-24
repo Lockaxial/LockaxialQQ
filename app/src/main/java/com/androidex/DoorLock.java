@@ -22,7 +22,7 @@ import java.util.HashMap;
  * Created by yangjun on 16/6/6.
  * 锁相开源门禁机软件的主要服务类,DoorLock主要提供开门,关门指令以及上报门开和关闭的事件.
  */
-public class DoorLock extends Service implements OnBackCall {
+public class DoorLock extends Service implements OnBackCall{
 
     public static final String TAG = "DoorLock";
     public static final String mDoorSensorAction = "com.android.action.doorsensor";

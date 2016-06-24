@@ -21,7 +21,7 @@
  	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
  	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.NFC" />
-
+    <uses-feature android:name="android.hardware.nfc" android:required="true" />
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -36,6 +36,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- NFC-related intent filter. Allows application to handle messages from any
+                 NFC-A devices discovered. Other Android devices are required to support NFC-A.
+                 See: res/xml/nfc_tech_filter.xml -->
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_tech_filter" />
         </activity>
         
          <activity

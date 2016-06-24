@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -22,6 +23,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.androidex.DoorLock;
+import com.androidex.LoyaltyCardReader;
 import com.androidex.plugins.kkaexparams;
 import com.tencent.device.TXBinderInfo;
 import com.tencent.device.TXDeviceService;
@@ -30,12 +32,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends Activity{
+public class MainActivity extends Activity implements LoyaltyCardReader.AccountCallback{
   
 	private GridView mGridView; 
 	private BinderListAdapter mAdapter;
 	private NotifyReceiver  mNotifyReceiver;
     private Toast toast;
+    // Recommend NfcAdapter flags for reading from other Android devices. Indicates that this
+    // activity is interested in NFC-A devices (including other Android devices), and that the
+    // system should not check for the presence of NDEF-formatted data (e.g. Android Beam).
+    public static int READER_FLAGS =
+            NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+    public LoyaltyCardReader mLoyaltyCardReader;
 
     protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated constructor stub
@@ -79,6 +87,10 @@ public class MainActivity extends Activity{
 			Intent intent = new Intent(MainActivity.this, WifiDecodeActivity.class);
 			startActivity(intent);
         }
+        mLoyaltyCardReader = new LoyaltyCardReader(this);
+
+        // Disable Android Beam and register our card reader callback
+        enableReaderMode();
 
         AudioManager mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         //通话音量
@@ -230,10 +242,12 @@ public class MainActivity extends Activity{
 				mAdapter.freshBinderList(binderList);
 			}
 		}
+        enableReaderMode();
 	}
 	
 	protected void onPause(){
 		super.onPause();
+        disableReaderMode();
         //unbindService(mConn);
     }
 	
@@ -242,8 +256,39 @@ public class MainActivity extends Activity{
         //unbindService(mConn);
         unregisterReceiver(mNotifyReceiver);
 	}
-	
-	public class NotifyReceiver extends BroadcastReceiver {
+    private void enableReaderMode() {
+        Log.i("", "启用读卡模式");
+        Activity activity = this;
+        NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
+        if (nfc != null) {
+            nfc.enableReaderMode(activity, mLoyaltyCardReader, READER_FLAGS, null);
+        }
+    }
+
+    private void disableReaderMode() {
+        Log.i("", "禁用读卡模式");
+        Activity activity = this;
+        NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
+        if (nfc != null) {
+            nfc.disableReaderMode(activity);
+        }
+    }
+
+    @Override
+    public void onAccountReceived(String account) {
+        // This callback is run on a background thread, but updates to UI elements must be performed
+        // on the UI thread.
+        toast.setText(account);
+        toast.show();
+        /*getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mAccountField.setText(account);
+            }
+        });*/
+    }
+
+    public class NotifyReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction() == TXDeviceService.BinderListChange){

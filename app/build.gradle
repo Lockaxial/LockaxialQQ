@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.2"
     defaultConfig {
         applicationId "com.tencent.devicedemo"
-        minSdkVersion 17
+        minSdkVersion 19
         targetSdkVersion 19
         ndk {
             moduleName "qqlib"
@@ -50,7 +50,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
-    compile(name:'AndroidExLibrary', ext:'aar')
+    compile(name: 'AndroidExLibrary', ext: 'aar')
     compile files('libs/txdevicesdk.jar')
     compile files('libs/qqDoorlock.jar')
 }

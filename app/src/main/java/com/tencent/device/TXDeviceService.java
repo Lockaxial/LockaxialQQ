@@ -172,9 +172,11 @@ public class TXDeviceService extends Service
         kkaexparams aexparams = new kkaexparams();
         JSONObject userinfo = new JSONObject();
         try {
-            String ui = aexparams.get_userinfo();
-            if(ui != null)
-                userinfo = new JSONObject(ui);
+            if(!get_serial().equals("FFFFFFFFFFFFFFFF")) {
+                String ui = aexparams.get_userinfo();
+                if (ui != null)
+                    userinfo = new JSONObject(ui);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
