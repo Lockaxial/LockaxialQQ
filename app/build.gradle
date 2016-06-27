@@ -13,7 +13,7 @@ android {
     buildToolsVersion "23.0.2"
     defaultConfig {
         applicationId "com.tencent.devicedemo"
-        minSdkVersion 19
+        minSdkVersion 17
         targetSdkVersion 19
         ndk {
             moduleName "qqlib"

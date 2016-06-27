@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.Window;
 import android.widget.TextView;
 
 import com.tencent.device.TXDeviceService;

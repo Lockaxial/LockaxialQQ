@@ -13,12 +13,14 @@ import android.os.Parcelable;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidex.DoorLock;
 import com.tencent.av.VideoController;
 import com.tencent.device.MsgPack;
 import com.tencent.device.TXBinderInfo;

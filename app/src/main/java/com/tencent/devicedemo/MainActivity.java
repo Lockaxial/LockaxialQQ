@@ -6,13 +6,17 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.nfc.NfcAdapter;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.Log;
@@ -88,7 +92,9 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 			Intent intent = new Intent(MainActivity.this, WifiDecodeActivity.class);
 			startActivity(intent);
         }
-        mLoyaltyCardReader = new LoyaltyCardReader(this);
+        if(Build.VERSION.SDK_INT >= 19) {
+            mLoyaltyCardReader = new LoyaltyCardReader(this);
+        }
 
         // Disable Android Beam and register our card reader callback
         enableReaderMode();
@@ -297,21 +303,27 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         //unbindService(mConn);
         unregisterReceiver(mNotifyReceiver);
 	}
+
     private void enableReaderMode() {
         Log.i("", "启用读卡模式");
-        Activity activity = this;
-        NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
-        if (nfc != null) {
-            nfc.enableReaderMode(activity, mLoyaltyCardReader, READER_FLAGS, null);
+        if(Build.VERSION.SDK_INT >= 19)
+        {
+            Activity activity = this;
+            NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
+            if (nfc != null) {
+                nfc.enableReaderMode(activity, mLoyaltyCardReader, READER_FLAGS, null);
+            }
         }
     }
 
     private void disableReaderMode() {
         Log.i("", "禁用读卡模式");
-        Activity activity = this;
-        NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
-        if (nfc != null) {
-            nfc.disableReaderMode(activity);
+        if(Build.VERSION.SDK_INT >= 19) {
+            Activity activity = this;
+            NfcAdapter nfc = NfcAdapter.getDefaultAdapter(activity);
+            if (nfc != null) {
+                nfc.disableReaderMode(activity);
+            }
         }
     }
 

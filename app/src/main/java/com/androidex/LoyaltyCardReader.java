@@ -15,6 +15,7 @@
  */
 package com.androidex;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -30,6 +31,7 @@ import java.util.Arrays;
  *
  * Reader mode can be invoked by calling NfcAdapter
  */
+@TargetApi(19)
 public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
     private static final String TAG = "LoyaltyCardReader";
     // AID for our loyalty card service.
@@ -44,6 +46,7 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
     // foreground mode before it becomes invalid (e.g. during onPause() or onStop()).
     private WeakReference<AccountCallback> mAccountCallback;
 
+    @TargetApi(19)
     public interface AccountCallback {
         public void onAccountReceived(String account);
     }
