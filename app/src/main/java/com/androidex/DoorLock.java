@@ -41,8 +41,8 @@ public class DoorLock extends Service implements OnBackCall{
      * DoorLock通过DoorLockOpenDoor广播获得开门指令并发送给门禁控制器
      */
     public static final String DoorLockOpenDoor          = "DoorLockOpenDoor";
-    public static final String actionRunReboot           = "android.intent.action.ACTION_REBOOT";
-    public static final String actionRunShutdown         = "android.intent.action.ACTION_REQUEST_SHUTDOWN";
+    //public static final String actionRunReboot           = "android.intent.action.REBOOT";
+    //public static final String actionRunShutdown         = "android.intent.action.ACTION_REQUEST_SHUTDOWN";
     private NotifyReceiver mReceiver;
     private static DoorLock mServiceInstance = null;
     private boolean mPlugedShutdown = false;
@@ -102,11 +102,11 @@ public class DoorLock extends Service implements OnBackCall{
         kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
         kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
 
-        Intent intent = new Intent(actionRunReboot);
-        intent.putExtra("nowait", 1);
-        intent.putExtra("interval", 60);
-        intent.putExtra("window", 0);
-        sendBroadcast(intent);
+        Intent intent = new Intent("com.android.internal.app.ShutdownActivity");
+        intent.setAction(Intent.ACTION_REBOOT);
+        intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     public void runShutdown() {
@@ -114,11 +114,10 @@ public class DoorLock extends Service implements OnBackCall{
         kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
         kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
 
-        Intent intent = new Intent(actionRunShutdown);
-        intent.putExtra("nowait", 1);
-        intent.putExtra("interval", 60);
-        intent.putExtra("window", 0);
-        sendBroadcast(intent);
+        Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
+        intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     public void setPlugedShutdown() {

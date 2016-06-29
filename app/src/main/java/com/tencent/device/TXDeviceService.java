@@ -172,7 +172,7 @@ public class TXDeviceService extends Service
         kkaexparams aexparams = new kkaexparams();
         JSONObject userinfo = new JSONObject();
         try {
-            if(!get_serial().equals("FFFFFFFFFFFFFFFF")) {
+            if(aexparams.get_flag0() != 0) {
                 String ui = aexparams.get_userinfo();
                 if (ui != null)
                     userinfo = new JSONObject(ui);
@@ -193,28 +193,28 @@ public class TXDeviceService extends Service
         String srvPubKey;
 
         // SDK测试
-        if(authinfo.optString("pid").isEmpty()) {
+        if(authinfo.optString("pid","").isEmpty()) {
             try {
                 authinfo.put("pid", 1700003316);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        if(authinfo.optString("sn").isEmpty()) {
+        if(authinfo.optString("sn","").isEmpty()) {
             try {
                 authinfo.put("sn",get_serial());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        if(authinfo.optString("license").isEmpty()) {
+        if(authinfo.optString("license","").isEmpty()) {
             try {
                 authinfo.put("license","3045022071CAD17F2FE0B7237EE04560C5476E8A692A12F9A0682E911739AAB97081ED7A022100B515F1F29A9241551E6BA61F411865293314C041DD341B1DCE3D6D7FD12AC20D");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        if(authinfo.optString("pubkey").isEmpty()) {
+        if(authinfo.optString("pubkey","").isEmpty()) {
             try {
                 authinfo.put("pubkey","0404EF63FA5206195F2B2464508E36AE80539A9D8BAFFA21A21AA9980C7B678A8A56E6F6AC7238A1FAB1E745AFA35301DF");
             } catch (JSONException e) {
