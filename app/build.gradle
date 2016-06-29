@@ -63,7 +63,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
-    compile(name: 'AndroidExLibrary', ext: 'aar')
+    compile files('libs/AndroidExSDK.jar')
     compile files('libs/txdevicesdk.jar')
     compile files('libs/qqDoorlock.jar')
 }
