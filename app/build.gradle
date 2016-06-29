@@ -20,6 +20,7 @@ android {
             ldLibs "log", "z", "m"
             abiFilters "armeabi", "armeabi-v7a", "x86"
         }
+        signingConfig signingConfigs.AndroidEx
     }
     buildTypes {
         release {

@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.androidex.DoorLock;
 import com.androidex.LoyaltyCardReader;
+import com.androidex.SoundPoolUtil;
 import com.androidex.plugins.kkaexparams;
 import com.tencent.device.TXBinderInfo;
 import com.tencent.device.TXDeviceService;
@@ -119,6 +120,51 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         Log.d("ALARM", "max : " + max + " current : " + current);
     }
 
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        switch(keyCode){
+            case KeyEvent.KEYCODE_0:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,0);
+                return true;
+            case KeyEvent.KEYCODE_1:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,1);
+                return true;
+            case KeyEvent.KEYCODE_2:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,2);
+                return true;
+            case KeyEvent.KEYCODE_3:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,3);
+                return true;
+            case KeyEvent.KEYCODE_4:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,4);
+                return true;
+            case KeyEvent.KEYCODE_5:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,5);
+                return true;
+            case KeyEvent.KEYCODE_6:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,6);
+                return true;
+            case KeyEvent.KEYCODE_7:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,7);
+                return true;
+            case KeyEvent.KEYCODE_8:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,8);
+                return true;
+            case KeyEvent.KEYCODE_9:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,9);
+                return true;
+            case KeyEvent.KEYCODE_STAR:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,10);
+                return true;
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_POUND:
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,11);
+                return true;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         AudioManager audio = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
         switch (keyCode) {
@@ -194,6 +240,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             public boolean onMenuItemClick(MenuItem item) {
                 setResult(RESULT_OK);
                 finish();
+                sendBroadcast(new Intent("com.android.action.display_navigationbar"));
                 return true;
             }
         });
@@ -244,6 +291,11 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        return super.dispatchKeyEvent(event);
     }
 
     public void eraseAllBinders(View v) {
@@ -299,6 +351,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 		super.onDestroy();
         //unbindService(mConn);
         unregisterReceiver(mNotifyReceiver);
+        sendBroadcast(new Intent("com.android.action.display_navigationbar"));
 	}
 
     private void enableReaderMode() {
