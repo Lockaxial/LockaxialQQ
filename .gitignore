@@ -1,10 +1,10 @@
 app.iml
 app/build
 build
-gradle
 import-summary.txt
 LockaxialQQ.iml
 .gradle
 .idea
 local.properties
 app-release.apk
+app/libs/AndroidExLibrary
