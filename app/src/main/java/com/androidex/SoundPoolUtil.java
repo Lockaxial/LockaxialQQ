@@ -92,7 +92,7 @@ public class SoundPoolUtil {
                 outgoing = soundPool.load(mContext, R.raw.dw9, 1);
                 break;
             case 011111:// 门开了语音
-                //outgoing = soundPool.load(mContext, R.raw.menjinkaimen, 1);
+                outgoing = soundPool.load(mContext, R.raw.menjinkaimen, 1);
                 break;
         }
 	}

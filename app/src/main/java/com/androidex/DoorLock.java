@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -145,7 +144,6 @@ public class DoorLock extends Service implements OnBackCall{
         return super.onStartCommand(intent, flags, startId);
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mDoorLock;
@@ -174,6 +172,9 @@ public class DoorLock extends Service implements OnBackCall{
             if(delay < 0 || delay > 0xFE) delay = 0;
             String cmd = String.format("FB%02X2503%02X01%02X00FE",ident,index,delay);
             int r = rkey.writeHex(rkeyDev,cmd);
+            if(r > 0) {
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(getBaseContext(),011111);
+            }
             return r > 0?1:0;
         }
         public int closeDoor(int index){

@@ -3,7 +3,7 @@
     package="com.tencent.devicedemo"
     android:versionCode="1"
     android:versionName="1.0"
-    android:sharedUserId="android.uid.system" >
+    android:sharedUserId="android.uid.system" android:installLocation="auto">
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -39,6 +39,9 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <!-- 负责在启动时作为左面程序进行启动 -->
+                <category android:name="android.intent.category.HOME" />
             </intent-filter>
             <!-- NFC-related intent filter. Allows application to handle messages from any
                  NFC-A devices discovered. Other Android devices are required to support NFC-A.
@@ -94,7 +97,11 @@
             android:screenOrientation="landscape"
             android:process=":video">
         </activity>
-
+        <receiver android:name=".BootBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         
         <service android:name="com.tencent.device.TXDeviceService">
             <intent-filter>
