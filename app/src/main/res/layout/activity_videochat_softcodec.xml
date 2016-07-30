@@ -51,9 +51,10 @@
             android:background="@drawable/av_btn_red"
             android:contentDescription="@string/switch_camera"
             android:onClick="onBtnSwitchVideo"
-            android:text="切换画面"
+            android:text="切换画面(1键)"
             android:textSize="16sp"
             android:visibility="gone" />
+
 
         <Button
             android:id="@+id/av_video_close"

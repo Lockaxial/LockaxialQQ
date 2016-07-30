@@ -3,8 +3,8 @@
     package="com.tencent.devicedemo"
     android:versionCode="1"
     android:versionName="1.0"
-    android:sharedUserId="android.uid.system" android:installLocation="auto">
-
+   android:installLocation="internalOnly">
+<!-- android:sharedUserId="android.uid.system" -->
     <uses-sdk
         android:minSdkVersion="11"
         android:targetSdkVersion="17" />
@@ -27,20 +27,21 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
     <application
+        android:name=".BaseApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" > 
+        android:theme="@style/AppTheme" >
         <activity
             android:name="com.tencent.devicedemo.MainActivity"
-            android:label="@string/app_name" 
+            android:label="@string/app_name"
+            android:theme="@style/Apptheme"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <!-- 负责在启动时作为左面程序进行启动 -->
                 <category android:name="android.intent.category.HOME" />
             </intent-filter>
             <!-- NFC-related intent filter. Allows application to handle messages from any
@@ -97,12 +98,33 @@
             android:screenOrientation="landscape"
             android:process=":video">
         </activity>
+
+        <activity
+            android:name="com.wificonnect.WifiConnActivity"
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:launchMode="singleTask"
+            android:configChanges="keyboardHidden|orientation|locale|screenSize"
+            android:alwaysRetainTaskState="true"
+            android:screenOrientation="landscape"
+            android:process=":video">
+        </activity>
+
+        <activity
+            android:name=".AudioRecordActivity"
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:launchMode="singleTask"
+            android:configChanges="keyboardHidden|orientation|locale|screenSize"
+            android:alwaysRetainTaskState="true"
+            android:screenOrientation="landscape">
+        </activity>
+
         <receiver android:name=".BootBroadcastReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        
+        <receiver android:name="com.tencent.devicedemo.AlarmReciver">
+        </receiver>
         <service android:name="com.tencent.device.TXDeviceService">
             <intent-filter>
                 <action android:name="com.tencent.device.RemoteTXDeviceService" />

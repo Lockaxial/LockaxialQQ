@@ -2,6 +2,7 @@ package com.tencent.devicedemo;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.androidex.DoorLock;
+import com.dialog.SpotsDialog;
 import com.tencent.av.VideoController;
 import com.tencent.device.MsgPack;
 import com.tencent.device.TXBinderInfo;
@@ -55,6 +57,15 @@ public class BinderActivity extends Activity  implements OnClickListener{
        
         Intent intent = getIntent();
         peerTinyId = intent.getLongExtra("tinyid", 0);
+		if(null!=getIntent().getStringExtra("videochat")&&"startvideo".equals(getIntent().getStringExtra("videochat"))){
+           finish();
+			if (false == VideoController.getInstance().hasPendingChannel()) {
+				TXDeviceService.getInstance().startVideoChatActivity(peerTinyId);
+			}
+			else {
+				Toast.makeText(BinderActivity.this.getApplicationContext(), "视频中", Toast.LENGTH_SHORT).show();
+			}
+		}/**开始视频呼叫*/
 
         //if(intent.getBooleanExtra("back", false))
         {

@@ -25,4 +25,9 @@
     <color name="landscape_background">#CCCCCC</color>
     <color name="text_contrast">#ff000000</color> <!-- If background is white, set to black, else set to white -->
 
+
+    <color name="yellow_warning">#FFFF99</color>
+    <color name="spots_dialog_color">@android:color/holo_blue_dark</color>
+    <color name="spots_dialog_bg">#11ffffff</color>
+
 </resources>

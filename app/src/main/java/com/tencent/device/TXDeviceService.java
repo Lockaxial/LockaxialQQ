@@ -172,7 +172,8 @@ public class TXDeviceService extends Service
         kkaexparams aexparams = new kkaexparams();
         JSONObject userinfo = new JSONObject();
         try {
-            if(aexparams.get_flag0() != 0) {
+            int flag0 = aexparams.get_flag0();
+            if(flag0 != 0 && flag0 != 0xFF) {
                 String ui = aexparams.get_userinfo();
                 if (ui != null)
                     userinfo = new JSONObject(ui);
@@ -570,6 +571,7 @@ public class TXDeviceService extends Service
         sendBroadcast(intent);
         //回复所有的DataPoint
         ackDataPoint(from,arrayDataPoint);
+        reportDataPoint(arrayDataPoint);
     }
     
     // ackDataPoint发送结果通知  

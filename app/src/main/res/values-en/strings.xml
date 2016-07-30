@@ -11,4 +11,6 @@
     <string name="unbind">解除绑定</string>
     <string name="q_unbind_all">您确定要解绑所有用户吗？</string>
     <string name="cancel">取消</string>
+
+    <string name="net_unavailable">check_net_setting</string>
 </resources>

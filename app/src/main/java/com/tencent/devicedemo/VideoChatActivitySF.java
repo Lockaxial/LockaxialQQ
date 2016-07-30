@@ -116,7 +116,7 @@ public class VideoChatActivitySF extends Activity {
 		else {
 			mSwitch.setVisibility(View.VISIBLE);
 			mClose.setVisibility(View.VISIBLE);
-			mClose.setText("取消");
+			mClose.setText("取消(2键)");
 			if (Long.parseLong(mPeerId) != 0) {
 				VideoController.getInstance().request(mPeerId);
 			}
@@ -500,6 +500,21 @@ public class VideoChatActivitySF extends Activity {
 				int frameLength = intent.getIntExtra("frame-length", 0);
 			}
 		}
+	}
+
+     @Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+
+		switch(keyCode){
+			case KeyEvent.KEYCODE_1:
+				onBtnSwitchVideo(null);
+				break;
+			case KeyEvent.KEYCODE_2:
+              finish();
+				break;
+
+		}
+		 return super.onKeyDown(keyCode, event);
 	}
 
 	interface QQGLRenderListenerType {

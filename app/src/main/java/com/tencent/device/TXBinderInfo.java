@@ -3,6 +3,7 @@ package com.tencent.device;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
 public class TXBinderInfo implements Parcelable
 {
 	public static int BINDER_TYPE_OWNER			= 1;
@@ -77,4 +78,15 @@ public class TXBinderInfo implements Parcelable
 			return new TXBinderInfo[size];
 		}
 	};
+
+	@Override
+	public String toString() {
+		return "TXBinderInfo{" +
+				"binder_type=" + binder_type +
+				", tinyid=" + tinyid +
+				", nick_name=" + Arrays.toString(nick_name) +
+				", binder_gender=" + binder_gender +
+				", head_url='" + head_url + '\'' +
+				'}';
+	}
 }

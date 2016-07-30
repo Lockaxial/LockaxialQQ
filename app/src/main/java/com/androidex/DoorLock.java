@@ -40,8 +40,8 @@ public class DoorLock extends Service implements OnBackCall{
      * DoorLock通过DoorLockOpenDoor广播获得开门指令并发送给门禁控制器
      */
     public static final String DoorLockOpenDoor          = "DoorLockOpenDoor";
-    //public static final String actionRunReboot           = "android.intent.action.REBOOT";
-    //public static final String actionRunShutdown         = "android.intent.action.ACTION_REQUEST_SHUTDOWN";
+    public static final String actionRunReboot           = "com.androidex.REBOOT";
+    public static final String actionRunShutdown         = "com.androidex.ACTION_REQUEST_SHUTDOWN";
     private NotifyReceiver mReceiver;
     private static DoorLock mServiceInstance = null;
     private boolean mPlugedShutdown = false;
@@ -61,6 +61,8 @@ public class DoorLock extends Service implements OnBackCall{
         filter.addAction(DoorLockOpenDoor);
         filter.addAction(TXDeviceService.OnReceiveDataPoint);
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        filter.addAction(actionRunReboot);
+        filter.addAction(actionRunShutdown);
         registerReceiver(mReceiver, filter);
         int r = mDoorLock.openDoor(1,16);
         if(r == 9)
@@ -69,9 +71,6 @@ public class DoorLock extends Service implements OnBackCall{
             Toast.makeText(DoorLock.this, String.format("Open door 1 fail return %d.",r), Toast.LENGTH_SHORT).show();
 
         Log.d(TAG,String.format("open door %d",r));
-        //am.set(4, System.currentTimeMillis() + 240000/*从现在起30s*/,
-        //        PendingIntent.getBroadcast(getApplicationContext(), 100, new Intent(actionRunReboot), PendingIntent.FLAG_UPDATE_CURRENT));
-
     }
 
     public void runSetAlarm(long wakeupTime) {
@@ -94,6 +93,7 @@ public class DoorLock extends Service implements OnBackCall{
         Intent intent = new Intent();
         pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         am.set(4,  wakeupTime, pendingIntent);
+        runShutdown();
     }
 
     public void runReboot() {
@@ -154,7 +154,7 @@ public class DoorLock extends Service implements OnBackCall{
         Log.v("onBackCallEvent",args);
     }
 
-    public class DoorLockServiceBinder extends IDoorLockInterface.Stub{
+    public class DoorLockServiceBinder extends IDoorLockInterface.Stub {
         String rkeyDev = "/dev/rkey";
         int ident = 0;
 
@@ -205,11 +205,16 @@ public class DoorLock extends Service implements OnBackCall{
                 int index = intent.getIntExtra("index", 0);
                 int status = intent.getIntExtra("status", 0);
 
-                if (status != 0){
+                if (status != 0) {
+
                     mDoorLock.openDoor(index, 0x20);
-                }else {
+                } else {
                     mDoorLock.closeDoor(index);
                 }
+            } else if(intent.getAction().equals(actionRunReboot)){
+                runReboot();
+            } else if(intent.getAction().equals(actionRunShutdown)){
+                runShutdown();
             } else if(intent.getAction().equals(TXDeviceService.OnReceiveDataPoint)){
                 Long from = intent.getExtras().getLong("from", 0);
                 Parcelable[] arrayDataPoint = intent.getExtras().getParcelableArray("datapoint");
@@ -219,12 +224,16 @@ public class DoorLock extends Service implements OnBackCall{
                         switch((int) dp.property_id) {
                             case 1600006:   //主门开锁
                             {
+                                TXDataPoint dpa[] = new TXDataPoint[1];
                                 int status = Integer.parseInt(dp.property_val);
                                 Intent ds_intent = new Intent();
                                 ds_intent.setAction(DoorLock.DoorLockOpenDoor);
                                 ds_intent.putExtra("index",0);
                                 ds_intent.putExtra("status",status);
                                 sendBroadcast(ds_intent);
+
+                                dpa[0] = dp;
+                                TXDeviceService.reportDataPoint(dpa);
                             }
                             break;
                             case 100003101: //副门开锁

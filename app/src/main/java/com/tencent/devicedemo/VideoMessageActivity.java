@@ -13,6 +13,7 @@ import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -41,8 +42,9 @@ public class VideoMessageActivity extends Activity  implements OnClickListener, 
 	
 	private Camera 			camera = null;
 	private MediaRecorder	mediarecorder;
-    private SurfaceView		surfaceview; 
-    
+    private SurfaceView		surfaceview;
+	Button btn_record;
+	Button btn_send;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,8 +63,8 @@ public class VideoMessageActivity extends Activity  implements OnClickListener, 
         Intent intent = getIntent();
         peerTinyId = intent.getLongExtra("tinyid", 0);
         
-		Button btn_send = (Button) findViewById(R.id.btn_videomsg_send);
-		Button btn_record = (Button) findViewById(R.id.btn_videomsg_record);
+        btn_send = (Button) findViewById(R.id.btn_videomsg_send);
+        btn_record = (Button) findViewById(R.id.btn_videomsg_record);
 		btn_send.setOnClickListener(this);
 		btn_record.setOnClickListener(this);
 		
@@ -123,6 +125,114 @@ public class VideoMessageActivity extends Activity  implements OnClickListener, 
 			}
 		}
 	};
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		String videoFile = this.getCacheDir().getAbsolutePath() + "/love.mp4";
+		String imageFile = this.getCacheDir().getAbsolutePath() + "/love.png";
+		switch(keyCode){
+			case KeyEvent.KEYCODE_1:
+			case R.id.btn_videomsg_record:
+			{
+				if (bRecording == false)
+				{
+					btn_send.setEnabled(false);
+					bRecording = true;
+					btn_record.setText("结束(3键)");
+
+					File f = new File(videoFile);
+					if (f.exists()) {
+						f.delete();
+					}
+
+					if (camera == null) {
+						openCamera(surfaceview.getHolder());
+					}
+
+					try {
+						camera.unlock();
+					}
+					catch (Exception e1) {
+						e1.printStackTrace();
+					}
+
+					mediarecorder = new MediaRecorder();// 创建mediarecorder对象
+					// 设置录制视频源为Camera(相机)
+					mediarecorder.setCamera(camera);
+					mediarecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+					mediarecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+
+					//mediarecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_LOW));
+					// 设置录制完成后视频的封装格式THREE_GPP为3gp.MPEG_4为mp4
+					mediarecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+					// 设置录制的视频编码h263 h264
+					mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+					//mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+					mediarecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+					//mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
+					// 设置视频录制的分辨率。必须放在设置编码和格式的后面，否则报错
+					mediarecorder.setVideoSize(width, height);
+					//mediarecorder.setVideoEncodingBitRate(bitRat);
+					// 设置录制的视频帧率。必须放在设置编码和格式的后面，否则报错
+//					if (fps != 0) {
+//						mediarecorder.setVideoFrameRate(fps);
+//					}
+					mediarecorder.setOrientationHint(90);
+					mediarecorder.setPreviewDisplay(surfaceview.getHolder().getSurface());
+					// 设置视频文件输出的路径
+					mediarecorder.setOutputFile(videoFile);
+
+					try {
+						mediarecorder.prepare();
+						mediarecorder.start();
+					} catch (IllegalStateException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+			}
+				return true;
+			case KeyEvent.KEYCODE_2:
+				if(btn_send.isEnabled())
+			{
+				TXDeviceService.sendVideoMsg(videoFile, imageFile, "视频留言", "收到一条视频留言", "点击查看", 1, null);
+			}
+			return true;
+
+			case KeyEvent.KEYCODE_3:
+
+				bRecording = false;
+				btn_record.setText("录制(1键)");
+				btn_send.setEnabled(true);
+				try {
+					if (mediarecorder != null) {
+						mediarecorder.stop();
+						mediarecorder.release();
+						mediarecorder = null;
+					}
+
+					camera.lock();
+					camera.stopPreview();
+					camera.release();
+					camera = null;
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				createtVideoThumbnail(videoFile, imageFile, width, height, MediaStore.Images.Thumbnails.MICRO_KIND);
+
+				return  true;
+
+			case KeyEvent.KEYCODE_DEL:
+				finish();
+				break;
+		}
+
+		return super.onKeyUp(keyCode, event);
+	}
 
 	@SuppressLint("InlinedApi") @Override
 	public void onClick(View v) {

@@ -1,5 +1,6 @@
 package com.tencent.devicedemo;
 
+import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -10,29 +11,46 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.media.AudioManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.androidex.DoorLock;
 import com.androidex.LoyaltyCardReader;
 import com.androidex.SoundPoolUtil;
-import com.androidex.plugins.kkaexparams;
+import com.dialog.SpotsDialog;
+import com.entity.Banner;
+import com.google.gson.Gson;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.tencent.device.TXBinderInfo;
 import com.tencent.device.TXDeviceService;
+import com.viewpager.AutoScrollViewPager;
+import com.wificonnect.WifiConnActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends Activity implements LoyaltyCardReader.AccountCallback{
@@ -47,6 +65,22 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
     public static int READER_FLAGS =
             NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
     public LoyaltyCardReader mLoyaltyCardReader;
+
+    private EditText tv_input;
+    private AutoScrollViewPager viewPager;
+    private Banner banner;
+    private Bg_Adapter bgAdapter;
+    private ImageView imageView;
+    private DisplayImageOptions options;
+    private WifiInfo wifiInfo = null;		//获得的Wifi信息
+    private WifiManager wifiManager = null;	//Wifi管理器
+    private Handler handler;
+    private ImageView wifi_image;			//信号图片显示
+    private int level;						//信号强度值
+    private ImageView iv_setting;
+    private RelativeLayout rl;
+    private ImageView iv_bind;
+
 
     protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated constructor stub
@@ -66,13 +100,173 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         }
 
 		setContentView(R.layout.activity_main);
-        kkaexparams.runShellCommand("chmod 0666 /dev/rkey");
+
+        viewPager=(AutoScrollViewPager)findViewById(R.id.vp_main);
+        imageView=(ImageView)findViewById(R.id.iv_erweima);
+        XUtilsNetwork.getInstance().getBgBanners(new NetworkCallBack() {
+            /**网络获得轮播背景图片数据*/
+            @Override
+            public void onSuccess(Object o) {
+                Gson gson = new Gson();
+                banner = gson.fromJson(o.toString(), Banner.class);
+                bgAdapter = new Bg_Adapter(MainActivity.this, banner.getData());
+                viewPager.setAdapter(bgAdapter);
+                viewPager.setCycle(true);
+                //viewPager.setSwipeScrollDurationFactor(2000);//设置ViewPager滑动动画间隔时间的倍率，达到减慢动画或改变动画速度的效果
+                viewPager.setInterval(50000);//设置自动滚动的间隔时间，单位为毫秒
+                viewPager.startAutoScroll();
+            }
+
+            @Override
+            public void onFailure(String error) {
+
+            }
+        });
+
+        options = new DisplayImageOptions.Builder()
+                .showImageOnFail(R.drawable.fail)
+                .showImageOnLoading(R.drawable.loading)
+                .cacheOnDisk(true)
+                .bitmapConfig(Bitmap.Config.ARGB_8888)
+                .build();
+
+        BaseApplication.getApplication().getImageLoader().displayImage("http://www.tyjdtzjc.cn/resource/kindeditor/attached/image/20150831/20150831021658_90595.png", imageView,options);
+         /**二维码图片 这我百度的图片,你把网址替换就可以了*/
+
+        //图片控件初始化
+        wifi_image = (ImageView) findViewById(R.id.wifi_image);
+        // 获得WifiManager
+        wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        rl=(RelativeLayout)findViewById(R.id.net_view_rl);
+        // 使用定时器,每隔5秒获得一次信号强度值
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                wifiInfo = wifiManager.getConnectionInfo();
+                //获得信号强度值
+                level = wifiInfo.getRssi();
+                //根据获得的信号强度发送信息
+                if (level <= 0 && level >= -50) {
+                    Message msg = new Message();
+                    msg.what = 1;
+                    handler.sendMessage(msg);
+                } else if (level < -50 && level >= -70) {
+                    Message msg = new Message();
+                    msg.what = 2;
+                    handler.sendMessage(msg);
+                } else if (level < -70 && level >= -80) {
+                    Message msg = new Message();
+                    msg.what = 3;
+                    handler.sendMessage(msg);
+                } else if (level < -80 && level >= -100) {
+                    Message msg = new Message();
+                    msg.what = 4;
+                    handler.sendMessage(msg);
+                } else {
+                    Message msg = new Message();
+                    msg.what = 5;
+                    handler.sendMessage(msg);
+                }
+
+            }
+
+        }, 1000, 5000);
+        // 使用Handler实现UI线程与Timer线程之间的信息传递,每5秒告诉UI线程获得wifiInto
+        // 使用Handler实现UI线程与Timer线程之间的信息传递,每5秒告诉UI线程获得wifiInto
+        handler = new Handler() {
+
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    // 如果收到正确的消息就获取WifiInfo，改变图片并显示信号强度
+                    case 1:
+                        wifi_image.setImageResource(R.drawable.wifi01);
+                        rl.setVisibility(View.GONE);
+                        if(listTemp1!=null&&listTemp1.length>0){
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                        }else{
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        }
+                        break;
+                    case 2:
+                        wifi_image.setImageResource(R.drawable.wifi02);
+                        rl.setVisibility(View.GONE);
+                        if(listTemp1!=null&&listTemp1.length>0){
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                        }else{
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        }
+                        break;
+                    case 3:
+                        wifi_image.setImageResource(R.drawable.wifi03);
+                        rl.setVisibility(View.GONE);
+                        if(listTemp1!=null&&listTemp1.length>0){
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                        }else{
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        }
+                        break;
+                    case 4:
+                        wifi_image.setImageResource(R.drawable.wifi04);
+                        rl.setVisibility(View.GONE);
+                        if(listTemp1!=null&&listTemp1.length>0){
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                        }else{
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        }
+                        break;
+                    case 5:
+                        wifi_image.setImageResource(R.drawable.wifi05);
+                        rl.setVisibility(View.VISIBLE);
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        break;
+                    default:
+                        //以防万一
+                        wifi_image.setImageResource(R.drawable.wifi_05);
+                        rl.setVisibility(View.VISIBLE);
+                            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+
+                }
+            }
+
+        };
+
+        rl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {/**跳转网络设置*/
+                try {
+                    if (Build.VERSION.SDK_INT > 10) {
+                       startActivity(new Intent(
+                                "android.settings.SETTINGS"));
+                        return;
+                    }
+                } catch (Exception localException) {
+                    localException.printStackTrace();
+                    return;
+                }
+               startActivity(new Intent(
+                        "android.settings.WIRELESS_SETTINGS"));
+
+        }
+        });
+
+        iv_bind=(ImageView)findViewById(R.id.user_bind);
+
 
 		Intent startIntent = new Intent(this, TXDeviceService.class); 
 		startService(startIntent);
 
         Intent dlIntent = new Intent(this, DoorLock.class);
         startService(dlIntent);
+        Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/GBK.TTF");
+        TextView com_tv=(TextView)findViewById(R.id.tv_companyname);/** 公司名*/
+        TextView com_xq=(TextView)findViewById(R.id.tv_xiaoqu);
+        com_xq.setText("碧水云天3栋2单元");
+        tv_input=(EditText)findViewById(R.id.tv_input);
+        tv_input.setTypeface(typeFace);
+        com_tv.setTypeface(typeFace);
+        com_xq.setTypeface(typeFace);
 
 		mGridView = (GridView) findViewById(R.id.gridView_binderlist);
 		mAdapter = new BinderListAdapter(this);
@@ -118,40 +312,74 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         max = mAudioManager.getStreamMaxVolume( AudioManager.STREAM_ALARM );
         current = mAudioManager.getStreamVolume( AudioManager.STREAM_ALARM );
         Log.d("ALARM", "max : " + max + " current : " + current);
+
+        /*AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        Intent intent;
+        PendingIntent pendingIntent;
+
+        intent = new Intent(getApplicationContext(),AlarmReciver.class);
+        pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,  SystemClock.elapsedRealtime()+10000, pendingIntent);
+        */
     }
 
+  private StringBuilder doornum=new StringBuilder();
+    TXBinderInfo [] arrayBinder1 ;
+    List<TXBinderInfo> binderList1;
+    AlertDialog dialog;
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         switch(keyCode){
             case KeyEvent.KEYCODE_0:
-                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,0);
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this, 0);
+                doornum.append("0");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_1:
-                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,1);
+                    SoundPoolUtil.getSoundPoolUtil().loadVoice(this,1);
+                    doornum.append("1");
+                    tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_2:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,2);
+                doornum.append("2");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_3:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,3);
+                doornum.append("3");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_4:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,4);
+                doornum.append("4");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_5:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,5);
+                doornum.append("5");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_6:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,6);
+                doornum.append("6");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_7:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,7);
+                doornum.append("7");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_8:
-                SoundPoolUtil.getSoundPoolUtil().loadVoice(this,8);
+                SoundPoolUtil.getSoundPoolUtil().loadVoice(this, 8);
+                doornum.append("8");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_9:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,9);
+                doornum.append("9");
+                tv_input.setText(doornum.toString());
                 return true;
             case KeyEvent.KEYCODE_STAR:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,10);
@@ -159,10 +387,60 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_POUND:
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,11);
+                if("666".equals(tv_input.getText().toString())){/**666为房门号 查找用户*/
+
+                    arrayBinder1 = TXDeviceService.getBinderList();
+                    binderList1=null;
+                    if (arrayBinder1 != null){
+                       binderList1 = new ArrayList<TXBinderInfo>();
+                        for (int i = 0; i < arrayBinder1.length; ++i){
+                            binderList1.add(arrayBinder1[i]);
+                        }
+                    }
+                    if(binderList1.size()>0){
+                        dialog = new SpotsDialog(MainActivity.this,"呼叫中(按(删除)取消)");
+                        dialog.show();
+                        if(dialog.isShowing()){
+                            long tinyid = binderList1.get(0).tinyid;
+                            String nickname = binderList1.get(0).getNickName();
+                           Intent  binder = new Intent(MainActivity.this, BinderActivity.class);
+                            binder.putExtra("tinyid", tinyid);
+                            binder.putExtra("nickname", nickname);
+                            binder.putExtra("videochat", "startvideo");
+                            // TXDeviceService.getInstance().sendNotifyMsg("提示", 0, null);/*发送强提醒通知*/
+                            try {
+                                Thread.sleep(3000);
+                                startActivity(binder);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }else{
+                        DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog);
+                        builder.show();
+                    }
+                    doornum=new StringBuilder("");
+                    tv_input.setText("");
+                }else{
+                   DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog);
+                    builder.show();
+                    doornum=new StringBuilder("");
+                    tv_input.setText("");
+                }
                 return true;
+            case KeyEvent.KEYCODE_DEL:
+                if(!"".equals(doornum.toString())){
+                    String num=doornum.toString().substring(0, doornum.length()-1);
+                    doornum=new StringBuilder(num);
+                    tv_input.setText(num);
+                }
+                break;
         }
+
         return super.onKeyUp(keyCode, event);
     }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -186,8 +464,10 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override
+   /* @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuItem m_wifi = menu.add("设置wifi");
         MenuItem m_unbind = menu.add("解除绑定");
         MenuItem m_upload_log = menu.add("上传日志");
         MenuItem m_opendoor_log = menu.add("打开主门");
@@ -198,6 +478,14 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         MenuItem m_setPlugedShutdown = menu.add("设置拔电关机");
 
         MenuItem m_exit_log = menu.add("退出");
+
+        m_wifi.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(MainActivity.this,WifiConnActivity.class));
+                return false;
+            }
+        });
 
         m_unbind.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
@@ -280,7 +568,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         });
 
         return true;
-    }
+    }*/
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -328,6 +616,11 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 
 	protected void onResume(){
 		super.onResume();
+
+        if(dialog!=null&&dialog.isShowing()){/*去掉呼叫中弹出框*/
+            dialog.dismiss();
+        }
+        iv_setting=(ImageView)findViewById(R.id.iv_setting);/*绑定状态显示*/
 		TXBinderInfo [] arrayBinder = TXDeviceService.getBinderList();
 		if (arrayBinder != null){
 			List<TXBinderInfo> binderList = new ArrayList<TXBinderInfo>();
@@ -339,11 +632,79 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 			}
 		}
         enableReaderMode();
+
+        iv_setting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupMenu popup = new PopupMenu(MainActivity.this, iv_setting);
+                popup.getMenuInflater()
+                        .inflate(R.menu.poupup_menu_home, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.action_settings1:
+                                startActivity(new Intent(MainActivity.this, WifiConnActivity.class));
+                                break;
+                            case R.id.action_settings2:
+
+                                break;
+                            case R.id.action_settings3:
+                                TXDeviceService.getInstance().uploadSDKLog();
+                                break;
+                            case R.id.action_settings4:
+                                int status = 2;
+                                Intent ds_intent = new Intent();
+                                ds_intent.setAction(DoorLock.DoorLockOpenDoor);
+                                ds_intent.putExtra("index", 0);
+                                ds_intent.putExtra("status", status);
+                                sendBroadcast(ds_intent);
+                                break;
+                            case R.id.action_settings5:
+                                int status1 = 2;
+                                Intent ds_intent1 = new Intent();
+                                ds_intent1.setAction(DoorLock.DoorLockOpenDoor);
+                                ds_intent1.putExtra("index", 1);
+                                ds_intent1.putExtra("status", status1);
+                                sendBroadcast(ds_intent1);
+                                break;
+                            case R.id.action_settings6:
+                                long wakeupTime = SystemClock.elapsedRealtime() + 240000;       //唤醒时间,如果是关机唤醒时间不能低于3分钟,否则无法实现关机定时重启
+                                DoorLock.getInstance().runSetAlarm(wakeupTime);
+                                break;
+                            case R.id.action_settings7:
+                                DoorLock.getInstance().runReboot();
+                                break;
+                            case R.id.action_settings8:
+                                DoorLock.getInstance().runShutdown();
+                                break;
+                            case R.id.action_settings9:
+                                DoorLock.getInstance().setPlugedShutdown();
+                                break;
+                            case R.id.action_settings10:
+                                setResult(RESULT_OK);
+                                finish();
+                                sendBroadcast(new Intent("com.android.action.display_navigationbar"));
+                                break;
+
+                        }
+                        return true;
+                    }
+                });
+
+                popup.show();
+            }
+        });
+
+                //registering popup with OnMenuItemClickListener
+
+
 	}
 	
 	protected void onPause(){
 		super.onPause();
         disableReaderMode();
+
         //unbindService(mConn);
     }
 	
@@ -391,11 +752,14 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         });*/
     }
 
+
+    Parcelable[] listTemp1;
     public class NotifyReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction() == TXDeviceService.BinderListChange){
 				Parcelable[] listTemp = intent.getExtras().getParcelableArray("binderlist");
+                listTemp1=listTemp;
 				List<TXBinderInfo> binderList = new ArrayList<TXBinderInfo>();
 				for (int i = 0; i < listTemp.length; ++i){
 					TXBinderInfo  binder = (TXBinderInfo)(listTemp[i]);
@@ -404,6 +768,12 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 				if (mAdapter != null) {
 					mAdapter.freshBinderList(binderList);
 				}
+
+                if(binderList.size()!=0){
+                    iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                }else{
+                    iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                }
 			} else if (intent.getAction() == TXDeviceService.OnEraseAllBinders){
 				int resultCode = intent.getExtras().getInt(TXDeviceService.OperationResult);
 				if (0 != resultCode) {
@@ -411,11 +781,12 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 				} else {
 					showAlert("解除绑定成功", "解除绑定成功!!!");
 				}
+                    iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
 			} else if(intent.getAction() == DoorLock.DoorLockStatusChange){
                 //门禁状态改变事件
                 //showAlert("门禁状态改变",intent.getStringExtra("doorsensor"));
                 String doorsendor = String.format("doorsensor=%s",intent.getStringExtra("doorsensor"));
-                Log.d("NotifyReceiver",doorsendor);
+                Log.d("NotifyReceiver", doorsendor);
                 toast.setText(doorsendor);
                 toast.show();
             }
@@ -429,5 +800,4 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 		dialogError = builder.create();
 		dialogError.show();
 	}
-
 }
