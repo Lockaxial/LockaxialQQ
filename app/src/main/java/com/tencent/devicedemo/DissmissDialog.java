@@ -15,15 +15,20 @@ import android.widget.TextView;
 public class DissmissDialog  extends AlertDialog {
     private int FLAG_DISMISS = 1;
     private boolean flag = true;
-
-    protected DissmissDialog(Context context, int theme) {
+    private String message;
+    private Context context;
+    protected DissmissDialog(Context context, int theme,String mes) {
         super(context, theme);
+        this.message=mes;
+        this.context=context;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dissmissdiglog);
+        TextView textView=(TextView)findViewById(R.id.dissmiss_dia_message);
+        textView.setText(message);
     }
 
     @Override

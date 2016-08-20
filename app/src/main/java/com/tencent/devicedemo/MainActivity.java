@@ -14,6 +14,8 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
@@ -235,18 +237,23 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         rl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {/**跳转网络设置*/
-                try {
+                /*try {
                     if (Build.VERSION.SDK_INT > 10) {
-                       startActivity(new Intent(
-                                "android.settings.SETTINGS"));
-                        return;
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.setClassName("com.android.settings", "com.android.settings.Settings");
+                        intent.putExtra("back",true);
+                        //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        sendBroadcast(new Intent("com.android.action.display_navigationbar"));
+                        startActivityForResult(intent,1004);
+                       return;
                     }
                 } catch (Exception localException) {
                     localException.printStackTrace();
                     return;
-                }
-               startActivity(new Intent(
-                        "android.settings.WIRELESS_SETTINGS"));
+                }*/
+                startActivity(new Intent(
+                        MainActivity.this,WifiConnActivity.class));
 
         }
         });
@@ -262,11 +269,13 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/GBK.TTF");
         TextView com_tv=(TextView)findViewById(R.id.tv_companyname);/** 公司名*/
         TextView com_xq=(TextView)findViewById(R.id.tv_xiaoqu);
+        //TextView com_log=(TextView)findViewById(R.id.tv_log);
         com_xq.setText("碧水云天3栋2单元");
         tv_input=(EditText)findViewById(R.id.tv_input);
         tv_input.setTypeface(typeFace);
         com_tv.setTypeface(typeFace);
         com_xq.setTypeface(typeFace);
+       // com_log.setTypeface(typeFace);
 
 		mGridView = (GridView) findViewById(R.id.gridView_binderlist);
 		mAdapter = new BinderListAdapter(this);
@@ -313,6 +322,12 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         current = mAudioManager.getStreamVolume( AudioManager.STREAM_ALARM );
         Log.d("ALARM", "max : " + max + " current : " + current);
 
+        if (!isNetworkAvailable(MainActivity.this))
+        {
+            Toast.makeText(getApplicationContext(), "当前没有可用网络！", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(
+                    MainActivity.this, WifiConnActivity.class));
+        }
         /*AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         Intent intent;
         PendingIntent pendingIntent;
@@ -386,6 +401,8 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                 return true;
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_POUND:
+               if (isNetworkAvailable(MainActivity.this))
+                {
                 SoundPoolUtil.getSoundPoolUtil().loadVoice(this,11);
                 if("666".equals(tv_input.getText().toString())){/**666为房门号 查找用户*/
 
@@ -401,33 +418,39 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                         dialog = new SpotsDialog(MainActivity.this,"呼叫中(按(删除)取消)");
                         dialog.show();
                         if(dialog.isShowing()){
-                            long tinyid = binderList1.get(0).tinyid;
+                            /*long tinyid = binderList1.get(0).tinyid;
                             String nickname = binderList1.get(0).getNickName();
                            Intent  binder = new Intent(MainActivity.this, BinderActivity.class);
                             binder.putExtra("tinyid", tinyid);
                             binder.putExtra("nickname", nickname);
-                            binder.putExtra("videochat", "startvideo");
-                            // TXDeviceService.getInstance().sendNotifyMsg("提示", 0, null);/*发送强提醒通知*/
+                            binder.putExtra("videochat", "startvideo");*/
+                            TXDeviceService.getInstance().sendNotifyMsg("提示", 0, null);/*发送强提醒通知*/
                             try {
                                 Thread.sleep(3000);
-                                startActivity(binder);
+                               // startActivity(binder);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                         }
 
                     }else{
-                        DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog);
+                        DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog,"没有绑定用户!");
                         builder.show();
                     }
                     doornum=new StringBuilder("");
                     tv_input.setText("");
                 }else{
-                   DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog);
+                   DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog,"此用户没绑定!");
                     builder.show();
                     doornum=new StringBuilder("");
                     tv_input.setText("");
                 }
+                }else{
+                   DissmissDialog builder=new DissmissDialog(MainActivity.this,R.style.selectorDialog,"网络问题,请检查网络!");
+                   builder.show();
+                   doornum=new StringBuilder("");
+                   tv_input.setText("");
+               }
                 return true;
             case KeyEvent.KEYCODE_DEL:
                 if(!"".equals(doornum.toString())){
@@ -800,4 +823,45 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 		dialogError = builder.create();
 		dialogError.show();
 	}
+
+
+    /**
+     * 检查当前网络是否可用
+     *
+     * @param
+     * @return
+     */
+
+    public boolean isNetworkAvailable(Activity activity)
+    {
+        Context context = activity.getApplicationContext();
+        // 获取手机所有连接管理对象（包括对wi-fi,net等连接的管理）
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        if (connectivityManager == null)
+        {
+            return false;
+        }
+        else
+        {
+            // 获取NetworkInfo对象
+            NetworkInfo[] networkInfo = connectivityManager.getAllNetworkInfo();
+
+            if (networkInfo != null && networkInfo.length > 0)
+            {
+                for (int i = 0; i < networkInfo.length; i++)
+                {
+                    System.out.println(i + "===状态===" + networkInfo[i].getState());
+                    System.out.println(i + "===类型===" + networkInfo[i].getTypeName());
+                    // 判断当前网络状态是否为连接状态
+                    if (networkInfo[i].getState() == NetworkInfo.State.CONNECTED)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }

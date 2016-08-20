@@ -57,7 +57,7 @@ public class BinderActivity extends Activity  implements OnClickListener{
        
         Intent intent = getIntent();
         peerTinyId = intent.getLongExtra("tinyid", 0);
-		if(null!=getIntent().getStringExtra("videochat")&&"startvideo".equals(getIntent().getStringExtra("videochat"))){
+		/*if(null!=getIntent().getStringExtra("videochat")&&"startvideo".equals(getIntent().getStringExtra("videochat"))){
            finish();
 			if (false == VideoController.getInstance().hasPendingChannel()) {
 				TXDeviceService.getInstance().startVideoChatActivity(peerTinyId);
@@ -65,7 +65,7 @@ public class BinderActivity extends Activity  implements OnClickListener{
 			else {
 				Toast.makeText(BinderActivity.this.getApplicationContext(), "视频中", Toast.LENGTH_SHORT).show();
 			}
-		}/**开始视频呼叫*/
+		}*//**开始视频呼叫*/
 
         //if(intent.getBooleanExtra("back", false))
         {

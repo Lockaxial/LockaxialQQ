@@ -93,7 +93,6 @@ public class DoorLock extends Service implements OnBackCall{
         Intent intent = new Intent();
         pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         am.set(4,  wakeupTime, pendingIntent);
-        runShutdown();
     }
 
     public void runReboot() {
@@ -207,7 +206,8 @@ public class DoorLock extends Service implements OnBackCall{
 
                 if (status != 0) {
 
-                    mDoorLock.openDoor(index, 0x20);
+                    mDoorLock.openDoor(0, 0x20);
+                    mDoorLock.openDoor(1, 0x20);
                 } else {
                     mDoorLock.closeDoor(index);
                 }

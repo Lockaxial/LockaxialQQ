@@ -104,7 +104,7 @@
             android:gravity="left|center"
             android:layout_gravity="bottom"
             android:layout_marginLeft="10dp"
-            android:textSize="28sp"
+            android:textSize="40sp"
             android:textColor="@color/Text_BLUE"
             android:text="深圳市安卓工控设备有限公司"
             />
@@ -151,6 +151,16 @@
             android:layout_marginLeft="5dp"
             android:layout_marginTop="5dp"
             android:src="@drawable/ic_launcher"
+            />
+
+
+        <ImageView
+            android:id="@+id/tv_log"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_marginLeft="5dp"
+            android:src="@drawable/new_logo_qq"
             />
 
         <TextView

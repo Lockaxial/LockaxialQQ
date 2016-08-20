@@ -81,6 +81,8 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
         wifi_switch_btn.setOnClickListener(this);
         wifiList.setOnItemClickListener(this);
         wifi_scan_btn.setOnClickListener(this);
+        mConnList = new WifiConnListAdapter(getApplicationContext(), getAllNetWorkList());
+        wifiList.setAdapter(mConnList);
     }
 
     @Override
@@ -91,8 +93,10 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
                 finish();
                 break;
             case R.id.wifi_conn_switch_btn:
-                mConnList = new WifiConnListAdapter(getApplicationContext(), getAllNetWorkList());
-                wifiList.setAdapter(mConnList);
+               /* mConnList = new WifiConnListAdapter(getApplicationContext(), getAllNetWorkList());
+                wifiList.setAdapter(mConnList);*/
+                getAllNetWorkList();
+                mConnList.notifyDataSetChanged();
                 break;
             case R.id.wifi_conn_scan_btn:
                 if (isOpen) {
@@ -272,10 +276,13 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
                 if (checknet()) {
                     Log.d("111111>>>>>>>>>>", "成功");
                     showConn.setText("已连接：   " + initShowConn());
+                    getAllNetWorkList();
+                    mConnList.notifyDataSetChanged();
                 } else {
                     Log.d("22222222>>>>>>>>>>", "失败");
                     showConn.setText("正在尝试连接：     " + initShowConn());
-
+                    getAllNetWorkList();
+                    mConnList.notifyDataSetChanged();
                 }
             }
         }
