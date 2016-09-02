@@ -11,7 +11,7 @@
         android:text="提示"
         android:layout_marginLeft="20dp"
         android:textSize="30sp"
-        android:textColor="#ffffff"
+        android:textColor="#000000"
         android:background="#00000000"
         android:gravity="left|center"
         />
@@ -20,8 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="此用户没绑定!"
-        android:textColor="#ffffff"
+        android:textColor="#000000"
         android:textSize="30sp"
         android:background="#00000000"
         android:gravity="center"

@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
-import android.widget.Toast;
 
 import com.androidex.DoorLock;
 
@@ -14,19 +13,19 @@ import com.androidex.DoorLock;
  * Created by yangjun on 15/5/21.
  */
 public class AlarmReciver extends BroadcastReceiver {
-    private static boolean showbar = true;
+    //private static boolean showbar = true;
     private static int times = 0;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Toast.makeText(context, String.format("alarm %s timers=%d",showbar?"true":"false",times), Toast.LENGTH_SHORT).show();
-        if(showbar){
+        //Toast.makeText(context, String.format("alarm %s timers=%d",showbar?"true":"false",times), Toast.LENGTH_SHORT).show();
+        /*if(showbar){
             context.sendBroadcast(new Intent("com.android.action.display_navigationbar"));
             showbar = false;
         }else{
             context.sendBroadcast(new Intent("com.android.action.hide_navigationbar"));
             showbar = true;
-        }
+        }*/
 
         if(times == 10){
             DoorLock.getInstance().runReboot();
@@ -46,13 +45,13 @@ public class AlarmReciver extends BroadcastReceiver {
                 ds_intent.putExtra("status", 1);
                 context.sendBroadcast(ds_intent);
             }
-            {
+            /*{
                 Intent ds_intent = new Intent();
                 ds_intent.setAction(DoorLock.DoorLockOpenDoor);
                 ds_intent.putExtra("index", 1);
                 ds_intent.putExtra("status", 1);
                 context.sendBroadcast(ds_intent);
-            }
+            }*/
         }
         times++;
     }

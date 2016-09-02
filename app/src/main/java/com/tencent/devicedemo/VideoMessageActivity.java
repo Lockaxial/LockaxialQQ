@@ -166,8 +166,8 @@ public class VideoMessageActivity extends Activity  implements OnClickListener, 
 					// 设置录制完成后视频的封装格式THREE_GPP为3gp.MPEG_4为mp4
 					mediarecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 					// 设置录制的视频编码h263 h264
-					mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-					//mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+					//mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+					mediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 					mediarecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
 					//mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
 					// 设置视频录制的分辨率。必须放在设置编码和格式的后面，否则报错

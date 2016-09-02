@@ -3,14 +3,17 @@ package com.tencent.devicedemo;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.media.AudioManager;
@@ -42,9 +45,9 @@ import com.androidex.LoyaltyCardReader;
 import com.androidex.SoundPoolUtil;
 import com.dialog.SpotsDialog;
 import com.entity.Banner;
-import com.google.gson.Gson;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.tencent.device.TXBinderInfo;
+import com.tencent.device.TXDataPoint;
 import com.tencent.device.TXDeviceService;
 import com.viewpager.AutoScrollViewPager;
 import com.wificonnect.WifiConnActivity;
@@ -103,13 +106,27 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 
 		setContentView(R.layout.activity_main);
 
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(TXDeviceService.BinderListChange);
+        filter.addAction(TXDeviceService.OnEraseAllBinders);
+        filter.addAction(TXDeviceService.wifisetting);
+        filter.addAction(DoorLock.DoorLockStatusChange);
+        filter.addAction(DoorLock.DoorLockOpenDoor);
+        filter.addAction(TXDeviceService.voicereceive);
+        filter.addAction(TXDeviceService.isconnected);
+        filter.addAction(TXDeviceService.BinderListChange);
+        filter.addAction(TXDeviceService.OnEraseAllBinders);
+        filter.addAction(DoorLock.DoorLockStatusChange);
+        mNotifyReceiver = new NotifyReceiver();
+        registerReceiver(mNotifyReceiver, filter);
+
         viewPager=(AutoScrollViewPager)findViewById(R.id.vp_main);
         imageView=(ImageView)findViewById(R.id.iv_erweima);
-        XUtilsNetwork.getInstance().getBgBanners(new NetworkCallBack() {
-            /**网络获得轮播背景图片数据*/
+       /* XUtilsNetwork.getInstance().getBgBanners(new NetworkCallBack() {//网络请求
+           // *//**网络获得轮播背景图片数据*//*
             @Override
             public void onSuccess(Object o) {
-                Gson gson = new Gson();
+               Gson gson = new Gson();
                 banner = gson.fromJson(o.toString(), Banner.class);
                 bgAdapter = new Bg_Adapter(MainActivity.this, banner.getData());
                 viewPager.setAdapter(bgAdapter);
@@ -123,7 +140,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             public void onFailure(String error) {
 
             }
-        });
+        });*/
 
         options = new DisplayImageOptions.Builder()
                 .showImageOnFail(R.drawable.fail)
@@ -222,6 +239,8 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                         wifi_image.setImageResource(R.drawable.wifi05);
                         rl.setVisibility(View.VISIBLE);
                             iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                        startActivity(new Intent(
+                                MainActivity.this, WifiConnActivity.class));
                         break;
                     default:
                         //以防万一
@@ -252,8 +271,9 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                     localException.printStackTrace();
                     return;
                 }*/
-                startActivity(new Intent(
-                        MainActivity.this,WifiConnActivity.class));
+                Intent intent = new Intent();
+                intent.setAction("android.net.wifi.PICK_WIFI_NETWORK");
+                startActivity(intent);
 
         }
         });
@@ -270,7 +290,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
         TextView com_tv=(TextView)findViewById(R.id.tv_companyname);/** 公司名*/
         TextView com_xq=(TextView)findViewById(R.id.tv_xiaoqu);
         //TextView com_log=(TextView)findViewById(R.id.tv_log);
-        com_xq.setText("碧水云天3栋2单元");
+        com_xq.setText("办公区门禁");
         tv_input=(EditText)findViewById(R.id.tv_input);
         tv_input.setTypeface(typeFace);
         com_tv.setTypeface(typeFace);
@@ -280,18 +300,21 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 		mGridView = (GridView) findViewById(R.id.gridView_binderlist);
 		mAdapter = new BinderListAdapter(this);
 		mGridView.setAdapter(mAdapter);
-		
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(TXDeviceService.BinderListChange);
-		filter.addAction(TXDeviceService.OnEraseAllBinders);
-        filter.addAction(DoorLock.DoorLockStatusChange);
-		mNotifyReceiver = new NotifyReceiver();
-		registerReceiver(mNotifyReceiver, filter);
 
         boolean bNetworkSetted = this.getSharedPreferences("TXDeviceSDK", 0).getBoolean("NetworkSetted", false);
-        if (TXDeviceService.NetworkSettingMode == true && bNetworkSetted == false) {
-			Intent intent = new Intent(MainActivity.this, WifiDecodeActivity.class);
-			startActivity(intent);
+        SharedPreferences sharedPreferences= getSharedPreferences("test",
+                Activity.MODE_PRIVATE);
+        String networkSettingMode =sharedPreferences.getString("NetworkSettingMode", "");
+        if("".equals(networkSettingMode)&& bNetworkSetted == false){
+            Intent intent = new Intent(MainActivity.this, WifiDecodeActivity.class);
+            startActivity(intent);
+            SharedPreferences mySharedPreferences= getSharedPreferences("test",
+                    Activity.MODE_PRIVATE);
+            SharedPreferences.Editor editor = mySharedPreferences.edit();
+            editor.putString("NetworkSettingMode", "true");
+            editor.commit();
+        }else if("true".equals(networkSettingMode)){
+
         }
         if(Build.VERSION.SDK_INT >= 19) {
             mLoyaltyCardReader = new LoyaltyCardReader(this);
@@ -328,14 +351,16 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             startActivity(new Intent(
                     MainActivity.this, WifiConnActivity.class));
         }
-        /*AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        Intent intent;
-        PendingIntent pendingIntent;
+        if(false) {
 
-        intent = new Intent(getApplicationContext(),AlarmReciver.class);
-        pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,  SystemClock.elapsedRealtime()+10000, pendingIntent);
-        */
+            AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            Intent intent;
+            PendingIntent pendingIntent;
+
+            intent = new Intent(getApplicationContext(), AlarmReciver.class);
+            pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10000, pendingIntent);
+        }
     }
 
   private StringBuilder doornum=new StringBuilder();
@@ -414,23 +439,19 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                             binderList1.add(arrayBinder1[i]);
                         }
                     }
-                    if(binderList1.size()>0){
-                        dialog = new SpotsDialog(MainActivity.this,"呼叫中(按(删除)取消)");
+                    if(binderList1!=null&&binderList1.size()>0){
+                        dialog = new SpotsDialog(MainActivity.this,"呼叫中(按(删除)键取消呼叫)");
                         dialog.show();
                         if(dialog.isShowing()){
-                            /*long tinyid = binderList1.get(0).tinyid;
+                            long tinyid = binderList1.get(0).tinyid;
                             String nickname = binderList1.get(0).getNickName();
                            Intent  binder = new Intent(MainActivity.this, BinderActivity.class);
                             binder.putExtra("tinyid", tinyid);
                             binder.putExtra("nickname", nickname);
-                            binder.putExtra("videochat", "startvideo");*/
-                            TXDeviceService.getInstance().sendNotifyMsg("提示", 0, null);/*发送强提醒通知*/
-                            try {
-                                Thread.sleep(3000);
-                               // startActivity(binder);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            TXDeviceService.getInstance().sendNotifyMsg("提示", 1700003316, new long[]{tinyid});/*发送强提醒通知*/
+                            TXDataPoint[] txDataPoints=new TXDataPoint[]{};
+                            TXDeviceService.ackDataPoint(tinyid, txDataPoints);
+                            handle.postDelayed(runnable, 1000);
                         }
 
                     }else{
@@ -640,6 +661,17 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 	protected void onResume(){
 		super.onResume();
 
+
+        Intent  intent=getIntent();
+        String bindnum=intent.getStringExtra("bindnmu");
+        if(!"".equals(bindnum)&&"havenum".equals(bindnum)){
+            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+        }else if(!"".equals(bindnum)&&"nullnum".equals(bindnum)){
+            iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+        }
+
+
+
         if(dialog!=null&&dialog.isShowing()){/*去掉呼叫中弹出框*/
             dialog.dismiss();
         }
@@ -653,6 +685,11 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 			if (mAdapter != null) {
 				mAdapter.freshBinderList(binderList);
 			}
+            if(binderList.size()>0){
+                iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+            }else{
+                iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+            }
 		}
         enableReaderMode();
 
@@ -718,11 +755,29 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                 popup.show();
             }
         });
-
                 //registering popup with OnMenuItemClickListener
-
-
 	}
+
+    private Runnable runnable=new Runnable() {
+        @Override
+        public void run() {
+            handle.postDelayed(runnable,1000);
+            if(dialog!=null&&dialog.isShowing()){
+                dialogtime++;
+
+                if(dialogtime>=30){
+                    handle.removeCallbacks(runnable);
+                    dialog.setMessage("呼叫失败");
+                    dialog.dismiss();
+                    dialogtime=0;
+                }
+            }
+        }
+    };
+
+    private int dialogtime=0;
+
+    private Handler handle=new Handler();
 	
 	protected void onPause(){
 		super.onPause();
@@ -792,10 +847,12 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 					mAdapter.freshBinderList(binderList);
 				}
 
-                if(binderList.size()!=0){
+                if(binderList.size()>0){
                     iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                   // startActivity(new Intent(MainActivity.this, WifiDecodeActivity.class));
                 }else{
                     iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                    startActivity(new Intent(MainActivity.this, WifiDecodeActivity.class));
                 }
 			} else if (intent.getAction() == TXDeviceService.OnEraseAllBinders){
 				int resultCode = intent.getExtras().getInt(TXDeviceService.OperationResult);
@@ -803,8 +860,10 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
 					showAlert("解除绑定失败", "解除绑定失败，错误码:" + resultCode);
 				} else {
 					showAlert("解除绑定成功", "解除绑定成功!!!");
-				}
                     iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                    startActivity(new Intent(MainActivity.this, WifiDecodeActivity.class));
+				}
+
 			} else if(intent.getAction() == DoorLock.DoorLockStatusChange){
                 //门禁状态改变事件
                 //showAlert("门禁状态改变",intent.getStringExtra("doorsensor"));
@@ -812,6 +871,33 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
                 Log.d("NotifyReceiver", doorsendor);
                 toast.setText(doorsendor);
                 toast.show();
+            }else if(intent.getAction() == TXDeviceService.wifisetting){
+                if(!isNetworkAvailable(MainActivity.this))
+               startActivity(new Intent(MainActivity.this,WifiConnActivity.class));
+            }else if(intent.getAction().equals(DoorLock.DoorLockOpenDoor)){
+                if(dialog!=null&&dialog.isShowing()){
+                    try {
+                        Thread.sleep(3000);/*休眠三秒*/
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    dialog.dismiss();
+                }
+            }else if(intent.getAction().equals(TXDeviceService.voicereceive)){
+                String filepath=intent.getStringExtra("filepath");
+                if ("".equals(filepath)) return;
+                Intent intent1=new Intent(MainActivity.this,AudioRecordActivity.class);
+                intent1.putExtra("filepath",filepath);
+                startActivity(intent1);
+
+            }else if (intent.getAction().equals(TXDeviceService.isconnected)){
+                String ishave=intent.getStringExtra("ishave");
+                if(!"".equals(ishave)&&ishave.equals("yes")){
+                    iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.binder_default_head));
+                }else{
+                    iv_bind.setImageDrawable(getResources().getDrawable(R.drawable.bind_offline));
+                }
+
             }
 		}
 	}

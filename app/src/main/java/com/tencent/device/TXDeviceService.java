@@ -19,6 +19,7 @@ import com.tencent.device.barrage.BarrageContext;
 import com.tencent.device.barrage.BarrageMsg;
 import com.tencent.device.barrage.BarrageMsg.GroupMsg;
 import com.tencent.device.barrage.IBarrageListener;
+import com.wificonnect.WifiConnActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,7 +76,11 @@ public class TXDeviceService extends Service
     public static final int transfer_filetype_video           = 2;    //视频文件
     public static final int transfer_filetype_audio           = 3;    //语音文件
     public static final int transfer_filetype_other           = 4;    //其它文件
-    
+
+    public static final String wifisetting 	 = "WifiSettingMain";   //wifi设置
+    public static final String voicereceive 	 = "voicereceive";   //接受语音
+    public static final String isconnected 	 = "isconnected";   //是否连接
+
     public static final String BinderListChange 	 = "BinderListChange";   //绑定列表变化
     
     public static final String OnEraseAllBinders  = "OnEraseAllBinders";  //解除所有用户绑定的回调通知
@@ -454,6 +459,11 @@ public class TXDeviceService extends Service
         if (error == 0)
         {
             showToastMessage("设备被绑定成功");
+            Intent intent=new Intent();
+            intent.setAction(TXDeviceService.isconnected);
+            intent.putExtra("ishave","yes");
+            sendBroadcast(intent);
+
         }
         else  
         {
@@ -511,6 +521,10 @@ public class TXDeviceService extends Service
         else
         {
             showToastMessage("登录失败");
+            Intent intent=new Intent();
+            //设置 Intent 的动作
+            intent.setAction(TXDeviceService.wifisetting);
+            sendBroadcast(intent);
         }
     }
      
@@ -529,6 +543,11 @@ public class TXDeviceService extends Service
     {
         Log.i(TAG, "onOfflineSuccess");
         showToastMessage("### 离线 ###");
+        Intent intent=new Intent();
+        //设置 Intent 的动作
+        intent.setAction(TXDeviceService.wifisetting);
+        sendBroadcast(intent);
+
     }
         
     //富媒体消息（Audio，Video，Picture）发送进度信息
@@ -603,6 +622,11 @@ public class TXDeviceService extends Service
         Log.i(TAG, "onTransferComplete: cookie = " + transfer_cookie + " err_code = " + err_code + " business_name:" + info.business_name + " extra_buffer:" + extra_buffer + "   file_path" + info.file_path);
         String strText = "收到文件，business_name:" + info.business_name + " extra_buffer:" + extra_buffer + "   file_path" + info.file_path;
         showToastMessage(strText);
+
+        Intent intent=new Intent();
+        intent.setAction(TXDeviceService.voicereceive);
+        intent.putExtra("filepath",info.file_path);
+        sendBroadcast(intent);
     }
     
     //文件传输回调：收到文件

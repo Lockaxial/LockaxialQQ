@@ -1,8 +1,14 @@
 package com.tencent.devicedemo;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.Gravity;
@@ -13,11 +19,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidex.DoorLock;
 import com.audiorecoder.AudioRecoderDialog;
 import com.audiorecoder.AudioRecoderUtils;
 import com.tencent.device.TXDeviceService;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by xinshuhao on 16/7/17.
@@ -74,8 +82,27 @@ public class AudioRecordActivity extends Activity implements AudioRecoderUtils.O
                 }
             }
         });
-    }
 
+
+        String audiopath=intent.getStringExtra("filepath");
+         mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            if(audiopath.endsWith("amr")){
+            mediaPlayer.setDataSource(audiopath);}
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.start();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(TXDeviceService.voicereceive);
+        mNotifyReceiver = new NotifyReceiver();
+        registerReceiver(mNotifyReceiver, filter);
+
+    }
+    private   MediaPlayer mediaPlayer;
     @Override
     public void onUpdate(double db) {
         if(null != recoderDialog) {
@@ -85,6 +112,14 @@ public class AudioRecordActivity extends Activity implements AudioRecoderUtils.O
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mNotifyReceiver);
+        mediaPlayer.stop();
+         mediaPlayer.release();
+    }
+    private NotifyReceiver  mNotifyReceiver;
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch(keyCode){
@@ -97,7 +132,7 @@ public class AudioRecordActivity extends Activity implements AudioRecoderUtils.O
                 return true;
             case KeyEvent.KEYCODE_3:
                 {
-                TXDeviceService.sendAudioMsg(audioFile, (int)(System.currentTimeMillis() - downT),0 , aa);
+                TXDeviceService.sendAudioMsg(audioFile, (int)(System.currentTimeMillis() - downT),1 , aa);
                 }
                 return true;
             case KeyEvent.KEYCODE_DEL:
@@ -105,5 +140,25 @@ public class AudioRecordActivity extends Activity implements AudioRecoderUtils.O
                 break;
         }
         return super.onKeyUp(keyCode, event);
+    }
+
+    public class NotifyReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+             if(intent.getAction().equals(TXDeviceService.voicereceive)){
+                String filepath=intent.getStringExtra("filepath");
+                if ("".equals(filepath)&&!filepath.endsWith("amr")) return;
+                 mediaPlayer = new MediaPlayer();
+                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                 try {
+                     mediaPlayer.setDataSource(filepath);
+                     mediaPlayer.prepare();
+                 } catch (IOException e) {
+                     e.printStackTrace();
+                 }
+                 mediaPlayer.start();
+            }
+        }
     }
 }

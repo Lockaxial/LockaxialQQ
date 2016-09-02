@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.REBOOT" android:protectionLevel="signatureOrSystem"/>
     <uses-permission android:name="android.permission.SHUTDOWN" android:protectionLevel="signatureOrSystem"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -68,7 +69,7 @@
             android:launchMode="singleTask"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
             android:alwaysRetainTaskState="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="landscape">
         </activity>
         
         <activity

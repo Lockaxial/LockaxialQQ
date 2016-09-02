@@ -14,7 +14,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.androidex.plugins.OnBackCall;
-import com.androidex.plugins.kkaexparams;
 import com.androidex.plugins.kkfile;
 import com.tencent.device.TXDataPoint;
 import com.tencent.device.TXDeviceService;
@@ -71,6 +70,10 @@ public class DoorLock extends Service implements OnBackCall{
             Toast.makeText(DoorLock.this, String.format("Open door 1 fail return %d.",r), Toast.LENGTH_SHORT).show();
 
         Log.d(TAG,String.format("open door %d",r));
+        /*AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        am.set(4, System.currentTimeMillis() + 480000,   //从现在起30s
+                PendingIntent.getBroadcast(getApplicationContext(), 100, new Intent(actionRunReboot), PendingIntent.FLAG_UPDATE_CURRENT));
+        */
     }
 
     public void runSetAlarm(long wakeupTime) {
@@ -90,32 +93,23 @@ public class DoorLock extends Service implements OnBackCall{
          *
          * RTC闹钟和ELAPSED_REALTIME最大的差别就是前者可以通过修改手机时间触发闹钟事件，后者要通过真实时间的流逝，即使在休眠状态，时间也会被计算。
          */
-        Intent intent = new Intent();
+        /*Intent intent = new Intent();
         pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        am.set(4,  wakeupTime, pendingIntent);
+        am.set(4,  wakeupTime, pendingIntent);*/
     }
 
     public void runReboot() {
         //首先要关闭程序提供的服务,以免关机时程序还需要写入数据,导致存属区损坏
-        kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
-        kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
-
-        Intent intent = new Intent("com.android.internal.app.ShutdownActivity");
-        intent.setAction(Intent.ACTION_REBOOT);
-        intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        Intent intent = new Intent();
+        intent.setAction("com.androidex.action.reboot");
+        sendBroadcast(intent);
     }
 
     public void runShutdown() {
         //首先要关闭程序提供的服务,以免关机时程序还需要写入数据,导致存属区损坏
-        kkaexparams.runShellCommand("sync");                                  // 关机前更新下缓存区
-        kkaexparams.runShellCommand("echo 3 >/proc/sys/vm/drop_caches");      // 清除存储器缓存
-
-        Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
-        intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        Intent intent = new Intent();
+        intent.setAction("com.androidex.action.shutdown");
+        sendBroadcast(intent);
     }
 
     public void setPlugedShutdown() {
@@ -206,8 +200,8 @@ public class DoorLock extends Service implements OnBackCall{
 
                 if (status != 0) {
 
-                    mDoorLock.openDoor(0, 0x20);
-                    mDoorLock.openDoor(1, 0x20);
+                    mDoorLock.openDoor(0xF0, 0x40);
+                    //mDoorLock.openDoor(1, 0x20);
                 } else {
                     mDoorLock.closeDoor(index);
                 }

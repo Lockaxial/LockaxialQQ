@@ -118,13 +118,14 @@ public class SpotsDialog extends AlertDialog {
         return animators;
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+
         switch(keyCode){
             case KeyEvent.KEYCODE_DEL:
                 dismiss();
-                return true;
+                break;
         }
         return super.onKeyUp(keyCode, event);
     }
+
 }

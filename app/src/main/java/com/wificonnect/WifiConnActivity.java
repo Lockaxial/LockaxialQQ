@@ -5,8 +5,6 @@ package com.wificonnect;
  */
 import java.util.ArrayList;
 import java.util.List;
-
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -16,6 +14,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
@@ -24,6 +23,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -54,6 +55,9 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
     private ArrayList<WifiElement> wifiElement = new ArrayList<WifiElement>();
     private boolean isOpen = false;
 
+    private ImageView im_wifi_anim;
+    private AnimationDrawable animationDrawable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
@@ -70,6 +74,9 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
         wifi_scan_btn = (Button) this.findViewById(R.id.wifi_conn_scan_btn);
         wifi_cancle_btn = (Button) this.findViewById(R.id.wifi_conn_cancle_btn);
         showConn = (TextView) this.findViewById(R.id.wifi_show_conn);
+
+        im_wifi_anim=(ImageView)findViewById(R.id.iv_wifianim);
+
         if (mWifiAdmin.getWifiState() == WifiManager.WIFI_STATE_DISABLED) {
             wifi_scan_btn.setText("打开wifi");
         } else {
@@ -89,6 +96,47 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
     public void onClick(View v) {
         // TODO Auto-generated method stub
         switch (v.getId()) {
+
+            case R.id.btn_setwifi:
+
+                if (isOpen) {
+                    Toast.makeText(getApplicationContext(), "正在关闭wifi", Toast.LENGTH_SHORT).show();
+                    if (mWifiAdmin.closeWifi()) {
+                        Toast.makeText(getApplicationContext(), "wifi关闭成功", Toast.LENGTH_SHORT).show();
+                        wifi_scan_btn.setText("打开wifi");
+                        isOpen = false;
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "wifi关闭失败", Toast.LENGTH_SHORT).show();
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                    }
+                } else {
+                    //Toast.makeText(getApplicationContext(), "正在打开wifi", Toast.LENGTH_SHORT).show();
+                    ((TextView)findViewById(R.id.tv_netstate)).setText("正在打开wifi");
+                    start_animation(R.anim.animation_wifi);
+                    handler.postDelayed(runnable,5000);
+                  /* if if (mWifiAdmin.OpenWifi()) {
+                        Toast.makeText(getApplicationContext(), "wifi打开成功", Toast.LENGTH_SHORT).show();
+                        wifi_scan_btn.setText("关闭wifi");
+                        isOpen = true;
+                        getAllNetWorkList();
+                        mConnList.notifyDataSetChanged();
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                        animationDrawable.stop();
+                    } else {
+                        ((TextView)findViewById(R.id.tv_netstate)).setText("wifi打开失败");
+                        Toast.makeText(getApplicationContext(), "wifi打开失败", Toast.LENGTH_SHORT).show();
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                    }*/
+                }
+
+
+                /*if(getAllNetWorkList().size()<=0){
+                    ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                }else if(getAllNetWorkList().size()>0){
+                    ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                }*/
+                break;
             case R.id.wifi_conn_cancle_btn:
                 finish();
                 break;
@@ -97,6 +145,11 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
                 wifiList.setAdapter(mConnList);*/
                 getAllNetWorkList();
                 mConnList.notifyDataSetChanged();
+                if(getAllNetWorkList().size()<=0){
+                    ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                }else if(getAllNetWorkList().size()>0){
+                    ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                }
                 break;
             case R.id.wifi_conn_scan_btn:
                 if (isOpen) {
@@ -122,6 +175,36 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
             default:
                 break;
         }
+    }
+
+    Runnable runnable=new Runnable() {
+        @Override
+        public void run() {
+            if (mWifiAdmin.OpenWifi()) {
+                ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                Toast.makeText(getApplicationContext(), "wifi打开成功", Toast.LENGTH_SHORT).show();
+                wifi_scan_btn.setText("关闭wifi");
+                isOpen = true;
+                getAllNetWorkList();
+                mConnList.notifyDataSetChanged();
+                animationDrawable.stop();
+                ((TextView)findViewById(R.id.tv_netstate)).setText("设备未联网");
+            } else {
+                ((TextView)findViewById(R.id.tv_netstate)).setText("wifi打开失败");
+                Toast.makeText(getApplicationContext(), "wifi打开失败", Toast.LENGTH_SHORT).show();
+                ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+            }
+        }
+    };
+
+    private Handler handler=new Handler();
+
+
+    private void start_animation(int id){
+        im_wifi_anim.setImageResource(id);
+        animationDrawable = (AnimationDrawable) im_wifi_anim
+                .getDrawable();
+        animationDrawable.start();
     }
 
     private String initShowConn() {
@@ -278,16 +361,33 @@ public class WifiConnActivity extends Activity implements OnItemClickListener, O
                     showConn.setText("已连接：   " + initShowConn());
                     getAllNetWorkList();
                     mConnList.notifyDataSetChanged();
+                    if(getAllNetWorkList().size()<=0){
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                    }else if(getAllNetWorkList().size()>0){
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                    }
+                    finish();
                 } else {
                     Log.d("22222222>>>>>>>>>>", "失败");
                     showConn.setText("正在尝试连接：     " + initShowConn());
                     getAllNetWorkList();
                     mConnList.notifyDataSetChanged();
+                    if(getAllNetWorkList().size()<=0){
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.VISIBLE);
+                    }else if(getAllNetWorkList().size()>0){
+                        ((LinearLayout)findViewById(R.id.ll_net)).setVisibility(View.GONE);
+                    }
                 }
             }
         }
 
     };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(netConnReceiver);
+    }
 
     /**
      * 获取网络
