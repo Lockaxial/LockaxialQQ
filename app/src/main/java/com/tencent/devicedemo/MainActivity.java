@@ -351,7 +351,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             startActivity(new Intent(
                     MainActivity.this, WifiConnActivity.class));
         }
-        if(false) {
+        if(true) {
 
             AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             Intent intent;
