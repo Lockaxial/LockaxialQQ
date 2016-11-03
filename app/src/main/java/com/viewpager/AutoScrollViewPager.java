@@ -1,8 +1,5 @@
 package com.viewpager;
 
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
-
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
@@ -12,6 +9,9 @@ import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.animation.Interpolator;
+
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 
 /**
  * Auto Scroll View Pager
@@ -34,7 +34,7 @@ import android.view.animation.Interpolator;
  */
 public class AutoScrollViewPager extends ViewPager {
 
-    public static final int        DEFAULT_INTERVAL            = 1500;
+    public static final int        DEFAULT_INTERVAL            = 2000;
 
     public static final int        LEFT                        = 0;
     public static final int        RIGHT                       = 1;
