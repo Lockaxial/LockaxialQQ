@@ -937,7 +937,7 @@ public class MainActivity extends Activity implements LoyaltyCardReader.AccountC
             {
                 for (int i = 0; i < networkInfo.length; i++)
                 {
-                    networkInfo[i].isAvailable()
+                    networkInfo[i].isAvailable();
                     // 判断当前网络状态是否为连接状态
                     if (networkInfo[i].getState() == NetworkInfo.State.CONNECTED)
                     {
