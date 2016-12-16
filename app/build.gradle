@@ -2,15 +2,10 @@ apply plugin: 'com.android.application'
 
 android {
     signingConfigs {
-        AndroidEx {
-            keyAlias 'AndroidExKey'
-            keyPassword 'androidex'
-            storeFile file('/Users/yangjun/我的Mac文件/安卓工控/projects/LockaxialQQ/androidex.keystore')
-            storePassword 'androidex'
-        }
+
     }
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion '23.0.3'
     defaultConfig {
         applicationId "com.tencent.devicedemo"
         minSdkVersion 17
@@ -20,16 +15,13 @@ android {
             ldLibs "log", "z", "m"
             abiFilters "armeabi", "armeabi-v7a", "x86"
         }
-        signingConfig signingConfigs.AndroidEx
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-            signingConfig signingConfigs.AndroidEx
         }
         debug {
-            signingConfig signingConfigs.AndroidEx
         }
     }
     productFlavors {
